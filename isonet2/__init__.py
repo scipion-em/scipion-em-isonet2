@@ -24,9 +24,43 @@
 # *  e-mail address 'scipion@cnb.csic.es'
 # *
 # **************************************************************************
+import os
 
+import pwem
+from isonet2.constants import ISONET2_CUDA_LIB, ISONET2_DEFAULT_ACTIVATION_CMD, ISONET2_ENV_ACTIVATION, ISONET2_HOME, \
+    ISONET2, ISONET2_DEFAULT_HASH
+from pyworkflow import TOMO
 
 
 __version__ = '3.0.0'
+
+from pyworkflow.utils import Environ
+
 _logo = "icon.png"
-_references = ['Wan2024', 'CruzLeon2024']
+_references = ['Liu2022']
+
+
+class Plugin(pwem.Plugin):
+    _pathVars = [ISONET2_CUDA_LIB]
+    _url = "https://github.com/scipion-em/scipion-em-isonet2"
+    _processingField = [TOMO]
+
+    @classmethod
+    def _defineVariables(cls):
+        cls._defineVar(ISONET2_ENV_ACTIVATION, ISONET2_DEFAULT_ACTIVATION_CMD)
+        cls._defineVar(ISONET2_CUDA_LIB, pwem.Config.CUDA_LIB)
+        cls._defineEmVar(ISONET2_HOME, ISONET2 + '-' + ISONET2_DEFAULT_HASH)
+
+    @classmethod
+    def getIsonet2EnvActivation(cls):
+        return cls.getVar(ISONET2_ENV_ACTIVATION)
+
+    @classmethod
+    def getEnviron(cls):
+        """ Set up the environment variables needed to launch gapstop. """
+        environ = Environ(os.environ)
+        if 'PYTHONPATH' in environ:
+            # this is required for python virtual env to work
+            del environ['PYTHONPATH']
+        cudaLib = cls.getVar(ISONET2_CUDA_LIB, pwem.Config.CUDA_LIB)
+        environ.addLibrary(cudaLib)
