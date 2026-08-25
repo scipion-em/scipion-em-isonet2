@@ -28,7 +28,7 @@ import os
 
 import pwem
 from isonet2.constants import ISONET2_CUDA_LIB, ISONET2_DEFAULT_ACTIVATION_CMD, ISONET2_ENV_ACTIVATION, ISONET2_HOME, \
-    ISONET2, ISONET2_DEFAULT_HASH
+    ISONET2, ISONET2_DEFAULT_HASH, ISONET2_ENV_NAME, ISONET2_HASH_DATE, ISONET2_DEFAULT_VERSION
 from pyworkflow import TOMO
 
 
@@ -49,7 +49,7 @@ class Plugin(pwem.Plugin):
     def _defineVariables(cls):
         cls._defineVar(ISONET2_ENV_ACTIVATION, ISONET2_DEFAULT_ACTIVATION_CMD)
         cls._defineVar(ISONET2_CUDA_LIB, pwem.Config.CUDA_LIB)
-        cls._defineEmVar(ISONET2_HOME, ISONET2 + '-' + ISONET2_DEFAULT_HASH)
+        cls._defineEmVar(ISONET2_HOME, ISONET2 + '-' + ISONET2_DEFAULT_VERSION)
 
     @classmethod
     def getIsonet2EnvActivation(cls):
@@ -64,3 +64,51 @@ class Plugin(pwem.Plugin):
             del environ['PYTHONPATH']
         cudaLib = cls.getVar(ISONET2_CUDA_LIB, pwem.Config.CUDA_LIB)
         environ.addLibrary(cudaLib)
+
+    @classmethod
+    def defineBinaries(cls, env):
+        ISONET2_CLONED = 'isonet2_cloned'
+        ISONET2_ENV_CREATED = 'isonet2_env_created'
+
+        # Clone the repository and checkout to the desired commit hash
+        cloneCmd = [
+            'git clone https://github.com/IsoNet-cryoET/IsoNet2.git',
+            'cd ./IsoNet2',
+            f'git checkout {ISONET2_DEFAULT_HASH}',
+            f'touch ../{ISONET2_CLONED}',
+        ]
+        cloneCmd = ' && '.join(cloneCmd)
+
+        # Create the dedicated conda environment and install IsoNet2 package
+        condaCmd = [
+            'cd ./IsoNet2',
+            f'conda env create -f isonet2_environment.yml -n {ISONET2_ENV_NAME}',
+            f'conda activate {ISONET2_ENV_NAME}',
+            f'pip install .',
+            f'touch ../{ISONET2_ENV_CREATED}'
+        ]
+        condaCmd = cls.getCondaActivationCmd() + ' && '.join(condaCmd)
+
+        installationCmds = [(cloneCmd, ISONET2_CLONED),
+                            (condaCmd, ISONET2_ENV_CREATED)]
+
+        envPath = os.environ.get('PATH', "")  # keep path since conda likely in there
+        installEnvVars = {'PATH': envPath} if envPath else None
+
+
+        env.addPackage(ISONET2,
+                       version=ISONET2_DEFAULT_VERSION,
+                       tar='void.tgz',
+                       commands=installationCmds,
+                       neededProgs=cls.getDependencies(),
+                       vars=installEnvVars,
+                       default=True)
+
+    @classmethod
+    def getDependencies(cls):
+        # try to get CONDA activation command
+        condaActivationCmd = cls.getCondaActivationCmd()
+        neededProgs = ['git']
+        if not condaActivationCmd:
+            neededProgs.append('conda')
+        return neededProgs
