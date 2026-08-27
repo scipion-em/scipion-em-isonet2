@@ -112,3 +112,11 @@ class Plugin(pwem.Plugin):
         if not condaActivationCmd:
             neededProgs.append('conda')
         return neededProgs
+
+    @classmethod
+    def runIsonet2(cls, protocol, program, args, cwd=None, numberOfMpi=1, useGpu=True):
+        cmd = cls.getCondaActivationCmd() + " "
+        cmd += cls.getIsonet2EnvActivation()
+        cmd += f" && CUDA_VISIBLE_DEVICES=%(GPU)s {program} " if useGpu else f" && {program} "
+
+        protocol.runJob(cmd, args, env=cls.getEnviron(), cwd=cwd, numberOfMpi=numberOfMpi)
