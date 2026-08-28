@@ -170,7 +170,7 @@ class ProtIsonet2PrepareData(ProtIsonet2Base):
         if not exists(tomoStarFile):
             raise Exception(f'Tomo star file {tomoStarFile} was not generated.')
         self.setTomoSStarFile(tomoStarFile)
-        self._store(tomoStarFile)
+        self._store(self._tomoFile)
 
     # -------------------------- UTILS functions ------------------------------
     def _genPrepareStarCmd(self, acq: TomoAcquisition) -> str:

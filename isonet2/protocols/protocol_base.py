@@ -46,3 +46,4 @@ class ProtIsonet2Base(EMProtocol):
 
     def _getStarFile(self):
         protPrepare = self._getFormAttrib(PREPARE_DATA_PROT)
+        return protPrepare.getTomoStarFile()
