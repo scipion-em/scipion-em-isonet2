@@ -186,7 +186,7 @@ class ProtIsonet2PrepareData(ProtIsonet2Base):
             f'--ac {acq.getAmplitudeContrast()}',
             f'--tilt_min {acq.getAngleMin()}',
             f'--tilt_max {acq.getAngleMax()}',
-            '--create_average True'
+            # '--create_average True'
         ]
         if self.tomoMaskDict:
             cmd += [f'--mask_folder {self._getMasksDir()}']
