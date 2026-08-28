@@ -57,7 +57,7 @@ class Plugin(pwem.Plugin):
 
     @classmethod
     def getEnviron(cls):
-        """ Set up the environment variables needed to launch gapstop. """
+        """ Set up the environment variables needed to launch IsoNet2. """
         environ = Environ(os.environ)
         if 'PYTHONPATH' in environ:
             # this is required for python virtual env to work
@@ -114,7 +114,8 @@ class Plugin(pwem.Plugin):
         return neededProgs
 
     @classmethod
-    def runIsonet2(cls, protocol, program, args, cwd=None, numberOfMpi=1, useGpu=True):
+    def runIsonet2(cls, protocol, args, cwd=None, numberOfMpi=1, useGpu=True):
+        program = 'isonet.py'
         cmd = cls.getCondaActivationCmd() + " "
         cmd += cls.getIsonet2EnvActivation()
         cmd += f" && CUDA_VISIBLE_DEVICES=%(GPU)s {program} " if useGpu else f" && {program} "

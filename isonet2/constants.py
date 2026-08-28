@@ -42,3 +42,13 @@ MASKS_DIR = 'masks'
 
 # Files
 TOMOGRAMS_STAR = 'inTomograms.star'
+ODD_SUFFIX = '_odd'
+EVEN_SUFFIX = '_even'
+MASK_SUFFIX = '_mask'
+MRC_EXT = '.mrc'
+
+# Form parameters
+IN_TOMOS = 'inTomos'
+IN_CTF_SET = 'inCtfSet'
+IN_TS_SET = 'inTsSet'
+TOMO_MASKS = 'tomoMasks'
