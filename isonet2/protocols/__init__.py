@@ -25,3 +25,4 @@
 # *
 # **************************************************************************
 from isonet2.protocols.protocol_prepare_data import ProtIsonet2PrepareData
+from isonet2.protocols.protocol_training import ProtIsonet2Training
