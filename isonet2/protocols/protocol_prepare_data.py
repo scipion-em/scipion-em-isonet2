@@ -160,7 +160,7 @@ class ProtIsonet2PrepareData(ProtIsonet2Base):
             tsSet = self._getFormAttrib(IN_TS_SET)
             acq = tsSet.getAcquisition()
             args = self._genPrepareStarCmd(acq)
-            Plugin.runIsonet2(self, args)
+            Plugin.runIsonet2(self, args, useGpu=False)
         except Exception as e:
             logger.error(redStr(f'Data preparation failed with the exception -> {e}'))
             logger.error(traceback.format_exc())
