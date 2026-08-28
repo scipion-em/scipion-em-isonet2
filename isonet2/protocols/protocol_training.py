@@ -51,7 +51,7 @@ class ProtIsonet2Training(ProtIsonet2Base):
         form.addParam(PREPARE_DATA_PROT, PointerParam,
                       pointerClass='ProtIsonet2PrepareData',
                       important=True,
-                      label='Tomograms')
+                      label='Isonet prepare data protocol')
 
         form.addHidden(GPU_LIST, StringParam,
                        default='0',
