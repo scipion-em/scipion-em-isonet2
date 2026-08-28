@@ -162,7 +162,8 @@ class ProtIsonet2PrepareData(ProtIsonet2Base):
             args = self._genPrepareStarCmd(acq)
             Plugin.runIsonet2(self, args)
         except Exception as e:
-            raise Exception(f'Data preparation failed with the exception -> {e}')
+            logger.error(redStr(f'Data preparation failed with the exception -> {e}'))
+            logger.error(traceback.format_exc())
 
     def validateExecutionStep(self):
         tomoStarFile = self._getTomosStarName()
