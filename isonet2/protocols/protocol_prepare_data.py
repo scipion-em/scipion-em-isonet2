@@ -180,13 +180,13 @@ class ProtIsonet2PrepareData(ProtIsonet2Base):
             f'--odd {self._getOddDir()}',
             f'--star_name {self._getTomosStarName()}',
             f'--pixel_size {self.samplingRate}',
-            f'--defocus {self._genZeroTiltDefocusList()}',
+            f'--defocus "{self._genZeroTiltDefocusList()}"',
             f'--cs {acq.getSphericalAberration()}',
             f'--voltage {acq.getVoltage()}',
             f'--ac {acq.getAmplitudeContrast()}',
             f'--tilt_min {acq.getAngleMin()}',
             f'--tilt_max {acq.getAngleMax()}',
-            '--create_average True',
+            '--create_average True'
         ]
         if self.tomoMaskDict:
             cmd += [f'--mask_folder {self._getMasksDir()}']
