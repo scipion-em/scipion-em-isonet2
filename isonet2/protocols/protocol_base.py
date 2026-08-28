@@ -25,6 +25,8 @@
 # *
 # **************************************************************************
 from typing import Union, Optional
+
+from isonet2.constants import PREPARE_DATA_PROT
 from pwem.protocols import EMProtocol
 from pyworkflow.object import Pointer
 from tomo.objects import SetOfTomograms, SetOfTiltSeries,SetOfCTFTomoSeries
@@ -41,3 +43,6 @@ class ProtIsonet2Base(EMProtocol):
             return None
         else:
             return inTsPointer if returnPointer else inTsPointer.get()
+
+    def _getStarFile(self):
+        protPrepare = self._getFormAttrib(PREPARE_DATA_PROT)

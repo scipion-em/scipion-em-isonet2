@@ -42,7 +42,7 @@ from tomo.utils import getTsIdsIntersection, getTsIdsDicts, check_sr_and_size, c
 logger = logging.getLogger(__name__)
 
 
-class ProtIsonet2Training(ProtIsonet2Base):
+class ProtIsonet2PrepareData(ProtIsonet2Base):
     """Generate the data in the format specified by IsoNet2."""
 
     _label = 'prepare data'
@@ -231,7 +231,7 @@ class ProtIsonet2Training(ProtIsonet2Base):
         ]
         if self.tomoMaskDict:
             dirList.append(self._getMasksDir())
-        makePath(*[dirList])
+        makePath(*dirList)
 
     def _getConvertedOrLinkedNameOdd(self, tsId: str) -> str:
         return join(self._getOddDir(), f'{tsId}{ODD_SUFFIX}{MRC_EXT}')
