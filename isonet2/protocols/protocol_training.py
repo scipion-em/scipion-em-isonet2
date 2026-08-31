@@ -129,10 +129,10 @@ class ProtIsonet2Training(ProtIsonet2Base):
                            'large-scale intensity gradients and drift.')
 
 
-        #vedi
-        form.addHidden(GPU_LIST, StringParam,
-                       default='0',
-                       label="Choose GPU IDs",
-                       help=""
-                       )
-
+        # #vedi
+        # form.addHidden(GPU_LIST, StringParam,
+        #                default='0',
+        #                label="Choose GPU IDs",
+        #                help=""
+        #                )
+        #
