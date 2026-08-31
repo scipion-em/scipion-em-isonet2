@@ -32,7 +32,7 @@ from isonet2.constants import PREPARE_DATA_PROT, CTF_NONE, UNET_MEDIUM, L2
 from isonet2.protocols.protocol_base import ProtIsonet2Base
 from pyworkflow import BETA
 from pyworkflow.protocol import PointerParam, GPU_LIST, StringParam, EnumParam, BooleanParam, FloatParam, \
-    LEVEL_ADVANCED, IntParam
+    LEVEL_ADVANCED, IntParam, GT
 from pyworkflow.utils import Message
 
 logger = logging.getLogger(__name__)
@@ -66,7 +66,7 @@ class ProtIsonet2Training(ProtIsonet2Base):
                       pointerClass='ProtIsonet2PretrainedModel',
                       label='Isonet pretrained model',
                       allowsNull=True,
-                      help='Pretrained model to continue training. Previous method, arch, cube_size, '
+                      help='Pretrained model to continue training. Previous method, architecture, cube_size, '
                            'CTF_mode, and metrics will be loaded.'
                       )
 
@@ -83,7 +83,8 @@ class ProtIsonet2Training(ProtIsonet2Base):
                       label='Is CTF flipped?',
                       default=False,
                       condition='CTF_mode != 0',
-                      help='Whether input tomograms are phase flipped.')
+                      help='Whether input tomograms are phase flipped.'
+                      )
         form.addParam('do_phaseflip_input', BooleanParam,
                       label='Phase flip the input',
                       default=True,
@@ -103,9 +104,9 @@ class ProtIsonet2Training(ProtIsonet2Base):
         form.addParam('b_factor', FloatParam,
                       label='B-factor',
                       default=0,
-                      help='B-factor applied during training/prediction to boost high-frequency content. For cellular '
-                           'tomograms we recommend a b-factor of 0. For isolated samples, you can use a b-factor '
-                           'from 200–300. '
+                      help='B-factor applied during training/prediction to boost high-frequency content. '
+                           'For cellular tomograms we recommend a b-factor of 0. For isolated samples, '
+                           'you can use a b-factor from 200–300. '
                       )
 
         form.addParam('snr_falloff', FloatParam,
@@ -137,7 +138,7 @@ class ProtIsonet2Training(ProtIsonet2Base):
                       default=UNET_MEDIUM,
                       display=EnumParam.DISPLAY_HLIST,
                       expertLevel=LEVEL_ADVANCED,
-                      help='Network architecture string (e.g., unet-small, unet-medium, unet-large). '
+                      help='Network architecture (e.g., unet-small, unet-medium, unet-large). '
                            'Determines model capacity and VRAM requirements.'
                       )
         form.addParam('batch_size', StringParam,
@@ -145,7 +146,8 @@ class ProtIsonet2Training(ProtIsonet2Base):
                       default='auto',
                       help='Number of subtomograms per optimization step; if "auto", this is automatically determined '
                            'by multiplying the number of available GPUs by 2. If the number of GPUs is 1, '
-                           'batch size is 4. Batch size per GPU matters for gradient stability.')
+                           'batch size is 4. Batch size per GPU matters for gradient stability.'
+                      )
         form.addParam('cube_size', IntParam,
                       label='Cube size',
                       default=96,
@@ -155,11 +157,13 @@ class ProtIsonet2Training(ProtIsonet2Base):
         form.addParam('epochs', IntParam,
                       label='Epochs',
                       default=50,
+                      validators=[GT(0)],
                       help='Number of training epochs.'
                       )
         form.addParam('learning_rate', FloatParam,
                       label='Learning rate',
                       default=3e-4,
+                      validators=[GT(0)],
                       help='Initial learning rate.'
                       )
         form.addParam('learning_rate_min', FloatParam,
@@ -179,6 +183,7 @@ class ProtIsonet2Training(ProtIsonet2Base):
         group.addParam('save_interval', IntParam,
                        label='Save interval (epochs)',
                        default=10,
+                       validators=[GT(0)],
                        help='Interval to save model checkpoints.'
                        )
         group.addParam('with_preview', BooleanParam,
@@ -193,8 +198,6 @@ class ProtIsonet2Training(ProtIsonet2Base):
                        help='If set, automatically predict only the tomograms listed by these indices '
                             '(e.g., "1,2,4" or "5-10,15,16")'
                        )
-
-
         form.addHidden(GPU_LIST, StringParam,
                        default='0',
                        label="Choose GPU IDs",
@@ -207,8 +210,18 @@ class ProtIsonet2Training(ProtIsonet2Base):
     def _validate(self) -> List[str]:
         valmsg = []
         cube_size = self.cube_size.get()
+        lr=self.learning_rate.get()
+        lr_min=self.learning_rate_min.get()
+        save_interval=self.interval.get()
+        epochs=self.epochs.get()
 
         if  cube_size < 64 or cube_size % 16 != 0:
             valmsg.append('Cube size must be higher than 64 and a multiple of 16.')
+
+        if lr_min>lr:
+            valmsg.append('Minimum learning rate must be lower than the initial learning rate.')
+
+        if save_interval>epochs:
+            valmsg.append('Save interval cannot be greater than the total number of epochs.')
 
         return valmsg
