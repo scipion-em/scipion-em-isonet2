@@ -204,6 +204,15 @@ class ProtIsonet2Training(ProtIsonet2Base):
                        help=""
                        )
 
+    def _insertAllSteps(self):
+        self._initialize()
+        closeSetStepDeps = []
+
+
+
+
+
+
 
     # --------------------------- INFO functions ------------------------------
 

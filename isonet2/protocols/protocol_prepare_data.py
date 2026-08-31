@@ -250,10 +250,10 @@ class ProtIsonet2PrepareData(ProtIsonet2Base):
         self._tomoFile.set(val)
 
     def _getOddDir(self) -> str:
-        return self._getTmpPath(ODD_DIR)
+        return self._getExtraPath(ODD_DIR)
 
     def _getEvenDir(self) -> str:
-        return self._getTmpPath(EVEN_DIR)
+        return self._getExtraPath(EVEN_DIR)
 
     def _getMasksDir(self) -> str:
         return self._getTmpPath(MASKS_DIR)
