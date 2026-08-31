@@ -212,7 +212,7 @@ class ProtIsonet2Training(ProtIsonet2Base):
         cube_size = self.cube_size.get()
         lr=self.learning_rate.get()
         lr_min=self.learning_rate_min.get()
-        save_interval=self.interval.get()
+        save_interval=self.save_interval.get()
         epochs=self.epochs.get()
 
         if  cube_size < 64 or cube_size % 16 != 0:
