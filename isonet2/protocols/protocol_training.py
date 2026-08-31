@@ -194,15 +194,12 @@ class ProtIsonet2Training(ProtIsonet2Base):
                        )
 
 
+        form.addHidden(GPU_LIST, StringParam,
+                       default='0',
+                       label="Choose GPU IDs",
+                       help=""
+                       )
 
-
-        # #vedi
-        # form.addHidden(GPU_LIST, StringParam,
-        #                default='0',
-        #                label="Choose GPU IDs",
-        #                help=""
-        #                )
-        #
 
     # --------------------------- INFO functions ------------------------------
 
