@@ -131,7 +131,7 @@ class ProtIsonet2Training(ProtIsonet2Base):
         form.addSection(label='Training Parameters')
         form.addParam('arch', EnumParam,
                       label='Architecture',
-                      choices=['unet-small', 'unet-medium', 'nunet-large'],
+                      choices=['unet-small', 'unet-medium', 'unet-large'],
                       default=UNET_MEDIUM,
                       display=EnumParam.DISPLAY_HLIST,
                       expertLevel=LEVEL_ADVANCED,
@@ -162,11 +162,9 @@ class ProtIsonet2Training(ProtIsonet2Base):
 
     def _validate(self) -> List[str]:
         valmsg = []
-        cube_size=self.cube_size.get()
+        cube_size = self.cube_size.get()
 
-        if not cube_size >= 64 and cube_size/16 == int:
+        if  cube_size < 64 or cube_size % 16 != 0:
             valmsg.append('Cube size must be higher than 64 and a multiple of 16.')
 
         return valmsg
-
-
