@@ -82,12 +82,12 @@ class ProtIsonet2Training(ProtIsonet2Base):
         form.addParam('isCTFflipped', BooleanParam,
                       label='Is CTF flipped?',
                       default=False,
-                      condition='CTF_mode != "None"',
+                      condition='CTF_mode != 0',
                       help='Whether input tomograms are phase flipped.')
         form.addParam('do_phaseflip_input', BooleanParam,
                       label='Do phase flip input',
                       default=True,
-                      condition='CTF_mode != "None"',
+                      condition='CTF_mode != 0',
                       help='Whether to apply phase flip during training.'
                       )
         form.addParam('b_factor', FloatParam,
@@ -97,10 +97,12 @@ class ProtIsonet2Training(ProtIsonet2Base):
                            'tomograms we recommend a b-factor of 0. For isolated samples, you can use a b-factor '
                            'from 200–300. '
                       )
-        form.addParam('clip_first_peak_mode', FloatParam,
+        form.addParam('clip_first_peak_mode', EnumParam,
                       label='Clip first peak mode',
-                      choices=[0, 1, 2, 3],
+                      choices=['none', 'constant clip', 'negative sine', 'cosine'],
                       default=1,
+                      display=EnumParam.DISPLAY_HLIST,
+                      condition='CTF_mode != 0',
                       help='Controls attenuation of overrepresented very-low-frequency CTF peak.'
                            '0: none, 1: constant clip, 2: negative sine, 3: cosine.'
                            'Options 2 and 3 might increase low-resolution contrast.'
