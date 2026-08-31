@@ -203,10 +203,23 @@ class ProtIsonet2Training(ProtIsonet2Base):
                        label="Choose GPU IDs",
                        help=""
                        )
-
+    # --------------------------- INSERT steps functions ----------------------
     def _insertAllSteps(self):
         self._initialize()
-        closeSetStepDeps = []
+        pID=[]
+
+        pId=self._insertFunctionStep(self.trainingStep,
+                                     prerequisites=pId,
+                                     needsGPU=True)
+        pId=self._insertFunctionStep(self.validateExecutionStep,
+                                     prerequisites=pId,
+                                     needsGPU=False)
+        self._insertFunctionStep(self.createOutputStep,
+                                 prerequisites=pId,
+                                 needsGPU=False)
+
+    # -------------------------- STEPS functions ------------------------------
+
 
 
 
