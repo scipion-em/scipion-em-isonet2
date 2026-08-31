@@ -25,12 +25,13 @@
 # *
 # **************************************************************************
 import logging
+from typing import List
 
-
-from isonet2.constants import PREPARE_DATA_PROT, CTF_NONE
+from isonet2.constants import PREPARE_DATA_PROT, CTF_NONE, UNET_MEDIUM
 from isonet2.protocols.protocol_base import ProtIsonet2Base
 from pyworkflow import BETA
-from pyworkflow.protocol import PointerParam, GPU_LIST, StringParam, EnumParam, BooleanParam, FloatParam, LEVEL_ADVANCED
+from pyworkflow.protocol import PointerParam, GPU_LIST, StringParam, EnumParam, BooleanParam, FloatParam, \
+    LEVEL_ADVANCED, IntParam
 from pyworkflow.utils import Message
 
 logger = logging.getLogger(__name__)
@@ -124,7 +125,30 @@ class ProtIsonet2Training(ProtIsonet2Base):
                       default=0.02,
                       expertLevel=LEVEL_ADVANCED,
                       help='Fraction of the Nyquist used as a very-low-frequency high-pass cutoff; use to remove '
-                           'large-scale intensity gradients and drift.')
+                           'large-scale intensity gradients and drift.'
+                      )
+
+        form.addSection(label='Training Parameters')
+        form.addParam('arch', EnumParam,
+                      label='Architecture',
+                      choices=['unet-small', 'unet-medium', 'nunet-large'],
+                      default=UNET_MEDIUM,
+                      display=EnumParam.DISPLAY_HLIST,
+                      expertLevel=LEVEL_ADVANCED,
+                      help='Network architecture string (e.g., unet-small, unet-medium, unet-large). '
+                           'Determines model capacity and VRAM requirements.'
+                      )
+        form.addParam('batch_size', StringParam,
+                      label='Batch size',
+                      default='auto',
+                      help='Number of subtomograms per optimization step; if "auto", this is automatically determined '
+                           'by multiplying the number of available GPUs by 2. If the number of GPUs is 1, '
+                           'batch size is 4. Batch size per GPU matters for gradient stability.')
+        form.addParam('cube_size', IntParam,
+                      label='Cube size',
+                      default=96,
+                      help='Size in voxels of training subvolumes. '
+                           'Must be compatible with the network (divisible by the network downsampling factors). ')
 
         # #vedi
         # form.addHidden(GPU_LIST, StringParam,
@@ -133,3 +157,16 @@ class ProtIsonet2Training(ProtIsonet2Base):
         #                help=""
         #                )
         #
+
+    # --------------------------- INFO functions ------------------------------
+
+    def _validate(self) -> List[str]:
+        valmsg = []
+        cube_size=self.cube_size.get()
+
+        if not cube_size >= 64 and cube_size/16 == int:
+            valmsg.append('Cube size must be higher than 64 and a multiple of 16.')
+
+        return valmsg
+
+
