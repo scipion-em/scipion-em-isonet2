@@ -55,7 +55,7 @@ TOMO_MASKS = 'tomoMasks'
 PREPARE_DATA_PROT = 'prepDataProt'
 
 # CTF MODE
-CTF_NONE='None'
-CTF_PHASE_ONLY='phase_only'
-CTF_WIENER='wiener'
-CTF_NETWORK='network'
+CTF_NONE=0
+CTF_PHASE_ONLY=1
+CTF_WIENER=2
+CTF_NETWORK=3

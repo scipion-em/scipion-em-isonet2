@@ -26,6 +26,7 @@
 # **************************************************************************
 import logging
 
+from pyperclip import lazy_load_stub_copy
 
 from isonet2.constants import PREPARE_DATA_PROT, CTF_NONE, CTF_PHASE_ONLY, CTF_WIENER, CTF_NETWORK
 from isonet2.protocols.protocol_base import ProtIsonet2Base
@@ -71,9 +72,10 @@ class ProtIsonet2Training(ProtIsonet2Base):
         form.addSection(label='CTF Mode')
         form.addParam('CTF_mode',EnumParam,
                       label='CTF mode',
-                      choices=[CTF_NONE,CTF_PHASE_ONLY,CTF_WIENER,CTF_NETWORK],
-                      defaut=CTF_NONE,
+                      choices=['None','phase_only','wiener','network'],
+                      default=CTF_NONE,
                       display=EnumParam.DISPLAY_HLIST,
+                      allowsNull=False,
                       help='CTF handling mode: "None", "phase_only", "wiener", or "network".'
                       )
 
