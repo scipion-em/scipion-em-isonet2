@@ -25,9 +25,10 @@
 # *
 # **************************************************************************
 import logging
+from multiprocessing.connection import default_family
 from typing import List
 
-from isonet2.constants import PREPARE_DATA_PROT, CTF_NONE, UNET_MEDIUM
+from isonet2.constants import PREPARE_DATA_PROT, CTF_NONE, UNET_MEDIUM, L2
 from isonet2.protocols.protocol_base import ProtIsonet2Base
 from pyworkflow import BETA
 from pyworkflow.protocol import PointerParam, GPU_LIST, StringParam, EnumParam, BooleanParam, FloatParam, \
@@ -84,7 +85,7 @@ class ProtIsonet2Training(ProtIsonet2Base):
                       condition='CTF_mode != 0',
                       help='Whether input tomograms are phase flipped.')
         form.addParam('do_phaseflip_input', BooleanParam,
-                      label='Do phase flip input',
+                      label='Phase flip the input',
                       default=True,
                       condition='CTF_mode != 0',
                       help='Whether to apply phase flip during training.'
@@ -148,7 +149,52 @@ class ProtIsonet2Training(ProtIsonet2Base):
                       label='Cube size',
                       default=96,
                       help='Size in voxels of training subvolumes. '
-                           'Must be compatible with the network (divisible by the network downsampling factors). ')
+                           'Must be compatible with the network (divisible by the network downsampling factors).'
+                      )
+        form.addParam('epochs', IntParam,
+                      label='Epochs',
+                      default=50,
+                      help='Number of training epochs.'
+                      )
+        form.addParam('learning_rate', FloatParam,
+                      label='Learning rate',
+                      default=3e-4,
+                      help='Initial learning rate.'
+                      )
+        form.addParam('learning_rate_min', FloatParam,
+                      label='Minimum learning rate',
+                      default=3e-4,
+                      expertLevel=LEVEL_ADVANCED,
+                      help='Minimum learning rate for scheduler.'
+                      )
+        form.addParam('loss_func', EnumParam,
+                      label='Loss function',
+                      choices=['L1','HUBER','L2'],
+                      default=L2,
+                      help='Loss function to use for training: L2,Huber,L1.'
+                      )
+
+        group=form.addGroup('Checkpoints & preview')
+        group.addParam('save_interval', IntParam,
+                       label='Save interval (epochs)',
+                       default=10,
+                       help='Interval to save model checkpoints.'
+                       )
+        group.addParam('with_preview', BooleanParam,
+                       label='Preview during training?',
+                       default=True,
+                       help='Run prediction every save interval.'
+                       )
+        group.addParam('prev_tomo_idx', StringParam,
+                       label='Preview tomogram index(es)',
+                       condition='with_preview',
+                       default=1,
+                       help='If set, automatically predict only the tomograms listed by these indices '
+                            '(e.g., "1,2,4" or "5-10,15,16")'
+                       )
+
+
+
 
         # #vedi
         # form.addHidden(GPU_LIST, StringParam,
