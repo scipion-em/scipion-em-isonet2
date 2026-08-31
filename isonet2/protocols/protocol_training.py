@@ -26,10 +26,8 @@
 # **************************************************************************
 import logging
 
-from pyperclip import lazy_load_stub_copy
 
-from isonet2.constants import PREPARE_DATA_PROT, CTF_NONE, CTF_PHASE_ONLY, CTF_WIENER, CTF_NETWORK, \
-    PEAK_MODE_CONSTANT_CLIP
+from isonet2.constants import PREPARE_DATA_PROT, CTF_NONE
 from isonet2.protocols.protocol_base import ProtIsonet2Base
 from pyworkflow import BETA
 from pyworkflow.protocol import PointerParam, GPU_LIST, StringParam, EnumParam, BooleanParam, FloatParam, LEVEL_ADVANCED
@@ -114,7 +112,7 @@ class ProtIsonet2Training(ProtIsonet2Base):
                       help='Controls frequency-dependent SNR attenuation applied during deconvolution; '
                            'larger values reduce high-frequency contribution more aggressively.'
                       )
-        form.addParam('deconv_strength',FloatParam,
+        form.addParam('deconv_strength', FloatParam,
                       label='Deconvolution strength',
                       default=1.0,
                       expertLevel=LEVEL_ADVANCED,
@@ -127,7 +125,6 @@ class ProtIsonet2Training(ProtIsonet2Base):
                       expertLevel=LEVEL_ADVANCED,
                       help='Fraction of the Nyquist used as a very-low-frequency high-pass cutoff; use to remove '
                            'large-scale intensity gradients and drift.')
-
 
         # #vedi
         # form.addHidden(GPU_LIST, StringParam,
