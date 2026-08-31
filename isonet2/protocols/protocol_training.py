@@ -90,13 +90,6 @@ class ProtIsonet2Training(ProtIsonet2Base):
                       condition='CTF_mode != 0',
                       help='Whether to apply phase flip during training.'
                       )
-        form.addParam('b_factor', FloatParam,
-                      label='B-factor',
-                      default=0,
-                      help='B-factor applied during training/prediction to boost high-frequency content. For cellular '
-                           'tomograms we recommend a b-factor of 0. For isolated samples, you can use a b-factor '
-                           'from 200–300. '
-                      )
         form.addParam('clip_first_peak_mode', EnumParam,
                       label='Clip first peak mode',
                       choices=['none', 'constant clip', 'negative sine', 'cosine'],
@@ -107,6 +100,14 @@ class ProtIsonet2Training(ProtIsonet2Base):
                            '0: none, 1: constant clip, 2: negative sine, 3: cosine.'
                            'Options 2 and 3 might increase low-resolution contrast.'
                       )
+        form.addParam('b_factor', FloatParam,
+                      label='B-factor',
+                      default=0,
+                      help='B-factor applied during training/prediction to boost high-frequency content. For cellular '
+                           'tomograms we recommend a b-factor of 0. For isolated samples, you can use a b-factor '
+                           'from 200–300. '
+                      )
+
         form.addParam('snr_falloff', FloatParam,
                       label='SNR falloff',
                       default=0,
@@ -171,7 +172,7 @@ class ProtIsonet2Training(ProtIsonet2Base):
                       label='Loss function',
                       choices=['L1','HUBER','L2'],
                       default=L2,
-                      help='Loss function to use for training: L2,Huber,L1.'
+                      help='Loss function to use for training: L1,Huber,L2.'
                       )
 
         group=form.addGroup('Checkpoints & preview')
