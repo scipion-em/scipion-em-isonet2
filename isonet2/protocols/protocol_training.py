@@ -28,10 +28,11 @@ import logging
 
 from pyperclip import lazy_load_stub_copy
 
-from isonet2.constants import PREPARE_DATA_PROT, CTF_NONE, CTF_PHASE_ONLY, CTF_WIENER, CTF_NETWORK
+from isonet2.constants import PREPARE_DATA_PROT, CTF_NONE, CTF_PHASE_ONLY, CTF_WIENER, CTF_NETWORK, \
+    PEAK_MODE_CONSTANT_CLIP
 from isonet2.protocols.protocol_base import ProtIsonet2Base
 from pyworkflow import BETA
-from pyworkflow.protocol import PointerParam, GPU_LIST, StringParam, EnumParam
+from pyworkflow.protocol import PointerParam, GPU_LIST, StringParam, EnumParam, BooleanParam, FloatParam, LEVEL_ADVANCED
 from pyworkflow.utils import Message
 
 logger = logging.getLogger(__name__)
@@ -70,18 +71,63 @@ class ProtIsonet2Training(ProtIsonet2Base):
                       )
 
         form.addSection(label='CTF Mode')
-        form.addParam('CTF_mode',EnumParam,
+        form.addParam('CTF_mode', EnumParam,
                       label='CTF mode',
-                      choices=['None','phase_only','wiener','network'],
+                      choices=['None', 'phase_only', 'wiener', 'network'],
                       default=CTF_NONE,
                       display=EnumParam.DISPLAY_HLIST,
                       allowsNull=False,
                       help='CTF handling mode: "None", "phase_only", "wiener", or "network".'
                       )
+        form.addParam('isCTFflipped', BooleanParam,
+                      label='Is CTF flipped?',
+                      default=False,
+                      condition='CTF_mode != "None"',
+                      help='Whether input tomograms are phase flipped.')
+        form.addParam('do_phaseflip_input', BooleanParam,
+                      label='Do phase flip input',
+                      default=True,
+                      condition='CTF_mode != "None"',
+                      help='Whether to apply phase flip during training.'
+                      )
+        form.addParam('b_factor', FloatParam,
+                      label='B-factor',
+                      default=0,
+                      help='B-factor applied during training/prediction to boost high-frequency content. For cellular '
+                           'tomograms we recommend a b-factor of 0. For isolated samples, you can use a b-factor '
+                           'from 200–300. '
+                      )
+        form.addParam('clip_first_peak_mode', FloatParam,
+                      label='Clip first peak mode',
+                      choices=[0, 1, 2, 3],
+                      default=1,
+                      help='Controls attenuation of overrepresented very-low-frequency CTF peak.'
+                           '0: none, 1: constant clip, 2: negative sine, 3: cosine.'
+                           'Options 2 and 3 might increase low-resolution contrast.'
+                      )
+        form.addParam('snr_falloff', FloatParam,
+                      label='SNR falloff',
+                      default=0,
+                      expertLevel=LEVEL_ADVANCED,
+                      help='Controls frequency-dependent SNR attenuation applied during deconvolution; '
+                           'larger values reduce high-frequency contribution more aggressively.')
+        form.addParam('deconv_strength',FloatParam,
+                      label='Deconvolution strength',
+                      default=1.0,
+                      expertLevel=LEVEL_ADVANCED,
+                      help='Scalar multiplier for deconvolution strength; increasing this emphasizes correction '
+                           'and low-frequency recovery.')
+        form.addParam('highpass_nyquist', FloatParam,
+                      label='Highpass nyquist',
+                      default=0.02,
+                      expertLevel=LEVEL_ADVANCED,
+                      help='Fraction of the Nyquist used as a very-low-frequency high-pass cutoff; use to remove '
+                           'large-scale intensity gradients and drift.')
 
 
-
+        #vedi
         form.addHidden(GPU_LIST, StringParam,
                        default='0',
-                       label="Choose GPU IDs",
-                       help="")
+                       label="Choose GPU IDs"
+                       )
+
