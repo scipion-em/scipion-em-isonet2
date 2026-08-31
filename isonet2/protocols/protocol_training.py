@@ -25,9 +25,7 @@
 # *
 # **************************************************************************
 import logging
-from enum import Enum
 
-from xmipp3.protocols.protocol_align_volume_and_particles import pointerClasses
 
 from isonet2.constants import PREPARE_DATA_PROT, CTF_NONE, CTF_PHASE_ONLY, CTF_WIENER, CTF_NETWORK
 from isonet2.protocols.protocol_base import ProtIsonet2Base
