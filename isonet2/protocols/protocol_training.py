@@ -110,13 +110,15 @@ class ProtIsonet2Training(ProtIsonet2Base):
                       default=0,
                       expertLevel=LEVEL_ADVANCED,
                       help='Controls frequency-dependent SNR attenuation applied during deconvolution; '
-                           'larger values reduce high-frequency contribution more aggressively.')
+                           'larger values reduce high-frequency contribution more aggressively.'
+                      )
         form.addParam('deconv_strength',FloatParam,
                       label='Deconvolution strength',
                       default=1.0,
                       expertLevel=LEVEL_ADVANCED,
                       help='Scalar multiplier for deconvolution strength; increasing this emphasizes correction '
-                           'and low-frequency recovery.')
+                           'and low-frequency recovery.'
+                      )
         form.addParam('highpass_nyquist', FloatParam,
                       label='Highpass nyquist',
                       default=0.02,
@@ -128,6 +130,7 @@ class ProtIsonet2Training(ProtIsonet2Base):
         #vedi
         form.addHidden(GPU_LIST, StringParam,
                        default='0',
-                       label="Choose GPU IDs"
+                       label="Choose GPU IDs",
+                       help=""
                        )
 
