@@ -53,3 +53,9 @@ IN_CTF_SET = 'inCtfSet'
 IN_TS_SET = 'inTsSet'
 TOMO_MASKS = 'tomoMasks'
 PREPARE_DATA_PROT = 'prepDataProt'
+
+# CTF MODE
+CTF_NONE='None'
+CTF_PHASE_ONLY='phase_only'
+CTF_WIENER='wiener'
+CTF_NETWORK='network'

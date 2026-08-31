@@ -25,22 +25,31 @@
 # *
 # **************************************************************************
 import logging
+from enum import Enum
 
-from isonet2.constants import PREPARE_DATA_PROT
+from xmipp3.protocols.protocol_align_volume_and_particles import pointerClasses
+
+from isonet2.constants import PREPARE_DATA_PROT, CTF_NONE, CTF_PHASE_ONLY, CTF_WIENER, CTF_NETWORK
 from isonet2.protocols.protocol_base import ProtIsonet2Base
 from pyworkflow import BETA
-from pyworkflow.protocol import PointerParam, GPU_LIST, StringParam
+from pyworkflow.protocol import PointerParam, GPU_LIST, StringParam, EnumParam
 from pyworkflow.utils import Message
 
 logger = logging.getLogger(__name__)
+
+
+# class Outputobjects(Enum):
+#     model = Isonet2Model
 
 
 class ProtIsonet2Training(ProtIsonet2Base):
     """Denoise for quicker noise-to-noise (n2n) training workflows for preliminary
     tomogram testing and mask generation."""
 
-    _label = 'training (denoising)'
+    _label = 'Isonet2 training (denoising)'
     _devStatus = BETA
+
+    # _possibleOutputs = Outputobjects
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -53,8 +62,26 @@ class ProtIsonet2Training(ProtIsonet2Base):
                       important=True,
                       label='Isonet prepare data protocol')
 
+        form.addParam('pretrained_model', PointerParam,
+                      pointerClass='ProtIsonet2PretrainedModel',
+                      label='Isonet pretrained model',
+                      allowsNull=True,
+                      help='Pretrained model to continue training. Previous method, arch, cube_size, '
+                           'CTF_mode, and metrics will be loaded.'
+                      )
+
+        form.addSection(label='CTF Mode')
+        form.addParam('CTF_mode',EnumParam,
+                      label='CTF mode',
+                      choices=[CTF_NONE,CTF_PHASE_ONLY,CTF_WIENER,CTF_NETWORK],
+                      defaut=CTF_NONE,
+                      display=EnumParam.DISPLAY_HLIST,
+                      help='CTF handling mode: "None", "phase_only", "wiener", or "network".'
+                      )
+
+
+
         form.addHidden(GPU_LIST, StringParam,
                        default='0',
                        label="Choose GPU IDs",
                        help="")
-
