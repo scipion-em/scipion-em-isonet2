@@ -25,14 +25,16 @@
 # *
 # **************************************************************************
 import logging
+import traceback
 from typing import List
 
+from isonet2 import Plugin
 from isonet2.constants import PREPARE_DATA_PROT, CTF_NONE, UNET_MEDIUM, L2, TOMOGRAMS_STAR
 from isonet2.protocols.protocol_base import ProtIsonet2Base
 from pyworkflow import BETA
 from pyworkflow.protocol import PointerParam, GPU_LIST, StringParam, EnumParam, BooleanParam, FloatParam, \
     LEVEL_ADVANCED, IntParam, GT
-from pyworkflow.utils import Message
+from pyworkflow.utils import Message, cyanStr, redStr
 
 logger = logging.getLogger(__name__)
 
@@ -173,12 +175,12 @@ class ProtIsonet2Training(ProtIsonet2Base):
                       )
         form.addParam('loss_func', EnumParam,
                       label='Loss function',
-                      choices=['L1','HUBER','L2'],
+                      choices=['L1', 'HUBER', 'L2'],
                       default=L2,
                       help='Loss function to use for training: L1,Huber,L2.'
                       )
 
-        group=form.addGroup('Checkpoints & preview')
+        group = form.addGroup('Checkpoints & preview')
         group.addParam('save_interval', IntParam,
                        label='Save interval (epochs)',
                        default=10,
@@ -203,7 +205,7 @@ class ProtIsonet2Training(ProtIsonet2Base):
                       label='Number of cpus',
                       default=16,
                       help='Number of CPUs to use for data processing.')
-        form.addParam('mixed_precision',BooleanParam,
+        form.addParam('mixed_precision', BooleanParam,
                       label='Use mixed precision?',
                       default=True,
                       help='If set to "Yes", float16/mixed precision to reduce VRAM and speed up training is used.')
@@ -213,18 +215,13 @@ class ProtIsonet2Training(ProtIsonet2Base):
                        label="Choose GPU IDs",
                        help=""
                        )
+
     # --------------------------- INSERT steps functions ----------------------
     def _insertAllSteps(self):
         self._initialize()
-        pId=[]
 
-
-        pId=self._insertFunctionStep(self.trainingStep,
-                                     prerequisites=pId,
-                                     needsGPU=True)
-        pId=self._insertFunctionStep(self.createOutputStep,
-                                 prerequisites=pId,
-                                 needsGPU=False)
+        self._insertFunctionStep(self.trainingStep,needsGPU=True)
+        self._insertFunctionStep(self.createOutputStep,needsGPU=False)
 
     # -------------------------- STEPS functions ------------------------------
     def _initialize(self):
@@ -232,26 +229,30 @@ class ProtIsonet2Training(ProtIsonet2Base):
 
 
     def trainingStep(self):
-       pass
+        logger.info(cyanStr(f' Training step...'))
+
+        try:
+            args = self._generateArguments()
+            Plugin.runIsonet2(self, args, useGpu=True)
+        except Exception as e:
+            logger.error(redStr(f'Denoise training failed with the exception -> {e}'))
+            logger.error(traceback.format_exc())
 
 
     def createOutputStep(self):
         pass
 
-
-
     # -------------------------- UTILS functions ------------------------------
     def _getTomosStarName(self) -> str:
         return self._getExtraPath(TOMOGRAMS_STAR)
 
-
-    def _generateArgumets(self)->str:
-        starFile=self._getStarFile()
+    def _generateArguments(self) -> str:
+        starFile = self._getStarFile()
         gpu = ' '.join([str(el) for el in self.getGpuList()])
-        pretrained_model=self.pretrained_model.get()
+        pretrained_model = self.pretrained_model.get()
 
         cmd = [
-            'denoise'
+            'denoise',
             f'--star_file {starFile}',
             f'--output_dir {self._getExtraPath()}',
             f'--gpuID {gpu}',
@@ -264,15 +265,16 @@ class ProtIsonet2Training(ProtIsonet2Base):
             f'--save_interval {self.save_interval.get()}',
             f'--learning_rate {self.learning_rate.get()}',
             f'--learning_rate_min {self.learning_rate_min.get()}',
+            f'--mixed_precision {self.mixed_precision.get()}',
             f'--CTF_mode {self.CTF_mode.get()}',
-            f'--bfacttor {self.b_factor.get()}',
+            f'--isCTFflipped {self.isCTFflipped.get()}',
+            f'--do_phaseflip_input {self.do_phaseflip_input.get()}'
+            f'--bfactor {self.b_factor.get()}',
             f'--clip_first_peak_mode {self.clip_first_peak_mode.get()}',
-            f'--snrfalloff '
-
-
-
-
-
+            f'--snrfalloff {self.snr_falloff.get()}',
+            f'--deconvstrength {self.deconv_strength.get()}',
+            f'--highpassnyquist {self.highpass_nyquist.get()}',
+            f'--with_preview {self.with_preview.get()}',
 
 
         ]
@@ -280,32 +282,26 @@ class ProtIsonet2Training(ProtIsonet2Base):
         if pretrained_model:
             pass
 
-        if self.mixed_precision.get():
-            cmd.append('--mixed_precision')
-
-        if self.isCTFflipped.get():
-            cmd.append('--isCTFflipped')
-
-
-
+        if self.with_preview.get():
+            cmd.append(f'--prev_tomo_idx {self.prev_tomo_idx.get()}')
 
     # --------------------------- INFO functions ------------------------------
 
     def _validate(self) -> List[str]:
         valmsg = []
         cube_size = self.cube_size.get()
-        lr=self.learning_rate.get()
-        lr_min=self.learning_rate_min.get()
-        save_interval=self.save_interval.get()
-        epochs=self.epochs.get()
+        lr = self.learning_rate.get()
+        lr_min = self.learning_rate_min.get()
+        save_interval = self.save_interval.get()
+        epochs = self.epochs.get()
 
-        if  cube_size < 64 or cube_size % 16 != 0:
+        if cube_size < 64 or cube_size % 16 != 0:
             valmsg.append('Cube size must be higher than 64 and a multiple of 16.')
 
-        if lr_min>lr:
+        if lr_min > lr:
             valmsg.append('Minimum learning rate must be lower than the initial learning rate.')
 
-        if save_interval>epochs:
+        if save_interval > epochs:
             valmsg.append('Save interval cannot be greater than the total number of epochs.')
 
         return valmsg
