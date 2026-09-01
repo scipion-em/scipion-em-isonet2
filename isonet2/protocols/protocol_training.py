@@ -28,7 +28,7 @@ import logging
 from multiprocessing.connection import default_family
 from typing import List
 
-from isonet2.constants import PREPARE_DATA_PROT, CTF_NONE, UNET_MEDIUM, L2
+from isonet2.constants import PREPARE_DATA_PROT, CTF_NONE, UNET_MEDIUM, L2, TOMOGRAMS_STAR
 from isonet2.protocols.protocol_base import ProtIsonet2Base
 from pyworkflow import BETA
 from pyworkflow.protocol import PointerParam, GPU_LIST, StringParam, EnumParam, BooleanParam, FloatParam, \
@@ -222,16 +222,27 @@ class ProtIsonet2Training(ProtIsonet2Base):
         pId=self._insertFunctionStep(self.trainingStep,
                                      prerequisites=pId,
                                      needsGPU=True)
-        pId=self._insertFunctionStep(self.validateExecutionStep,
-                                     prerequisites=pId,
-                                     needsGPU=False)
-        self._insertFunctionStep(self.createOutputStep,
+        pId=self._insertFunctionStep(self.createOutputStep,
                                  prerequisites=pId,
                                  needsGPU=False)
 
     # -------------------------- STEPS functions ------------------------------
+    def _initialize(self):
+        pass
+
+    def trainingStep(self):
+        starFile=self._getStarFile()
+        self._getTomosStarName(starFile)
 
 
+    def createOutputStep(self):
+        pass
+
+
+
+    # -------------------------- UTILS functions ------------------------------
+    def _getTomosStarName(self) -> str:
+        return self._getExtraPath(TOMOGRAMS_STAR)
 
 
 
