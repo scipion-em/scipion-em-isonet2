@@ -198,6 +198,17 @@ class ProtIsonet2Training(ProtIsonet2Base):
                        help='If set, automatically predict only the tomograms listed by these indices '
                             '(e.g., "1,2,4" or "5-10,15,16")'
                        )
+
+        form.addSection(label='Additional Parameters')
+        form.addParam('ncpus', IntParam,
+                      label='Number of cpus',
+                      default=16,
+                      help='Number of CPUs to use for data processing.')
+        form.addParam('mixed_precision',BooleanParam,
+                      label='Use mixed precision?',
+                      default=True,
+                      help='If set to "Yes", float16/mixed precision to reduce VRAM and speed up training is used.')
+
         form.addHidden(GPU_LIST, StringParam,
                        default='0',
                        label="Choose GPU IDs",
@@ -206,7 +217,7 @@ class ProtIsonet2Training(ProtIsonet2Base):
     # --------------------------- INSERT steps functions ----------------------
     def _insertAllSteps(self):
         self._initialize()
-        pID=[]
+        pId=[]
 
         pId=self._insertFunctionStep(self.trainingStep,
                                      prerequisites=pId,
