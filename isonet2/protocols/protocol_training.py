@@ -26,16 +26,18 @@
 # **************************************************************************
 import logging
 import traceback
+from os.path import join, exists
 from typing import List
 
 from isonet2 import Plugin
 from isonet2.constants import PREPARE_DATA_PROT, CTF_NONE, UNET_MEDIUM, L2, TOMOGRAMS_STAR, ARCH_CHOICES, \
-    LOSS_FUNC_CHOICES, CTF_MODE_CHOICES
+    LOSS_FUNC_CHOICES, CTF_MODE_CHOICES, TRAIN_DATA_CONFIG
+from isonet2.objects import Isonet2Model
 from isonet2.protocols.protocol_base import ProtIsonet2Base
 from pyworkflow import BETA
 from pyworkflow.protocol import PointerParam, GPU_LIST, StringParam, EnumParam, BooleanParam, FloatParam, \
     LEVEL_ADVANCED, IntParam, GT
-from pyworkflow.utils import Message, cyanStr, redStr
+from pyworkflow.utils import Message, cyanStr, redStr, makePath
 
 logger = logging.getLogger(__name__)
 
@@ -71,7 +73,7 @@ class ProtIsonet2Training(ProtIsonet2Base):
                            'CTF_mode, and metrics will be loaded.'
                       )
         form.addParam('pretrained_model', PointerParam,
-                      pointerClass='ProtIsonet2PretrainedModel',
+                      pointerClass='Isonet2Model',
                       label='Isonet pretrained model',
                       condition='pretrained_choice',
                       )
@@ -230,7 +232,7 @@ class ProtIsonet2Training(ProtIsonet2Base):
 
     # -------------------------- STEPS functions ------------------------------
     def _initialize(self):
-        pass
+        makePath(self._getModelDir())
 
 
     def trainingStep(self):
@@ -245,14 +247,26 @@ class ProtIsonet2Training(ProtIsonet2Base):
 
 
     def createOutputStep(self):
-        pass
+        modelFile = self._getModelPath()
+        if not exists(modelFile):
+            raise Exception(f'Model file {modelFile} was not generated.')
 
+        model = Isonet2Model(model_file=modelFile)
+
+        #output e relazioni
 
     # -------------------------- UTILS functions ------------------------------
-    def _getTomosStarName(self) -> str:
-        return self._getExtraPath(TOMOGRAMS_STAR)
+    def _getModelDir(self):
+        return self._getExtraPath('training')
+
+    def _getModelPath(self):
+        arch = ARCH_CHOICES[self.arch.get()]
+        return join(self._getModelDir(),f'network_n2n_{arch}_{self.cube_size.get()}_full.pt')
+
+    #getmodelfile x pretrained
 
     def _generateArguments(self) -> str:
+        output_dir=self._getModelDir()
         starFile = self._getStarFile()
         gpu = ' '.join([str(el) for el in self.getGpuList()])
         pretrained_model = self.pretrained_model.get()
@@ -260,7 +274,7 @@ class ProtIsonet2Training(ProtIsonet2Base):
         cmd = [
             'denoise',
             f'--star_file {starFile}',
-            f'--output_dir {self._getExtraPath()}',
+            f'--output_dir {output_dir}',
             f'--gpuID {gpu}',
             f'--ncpus {self.ncpus.get()}',
             f'--arch {ARCH_CHOICES[self.arch.get()]}',
