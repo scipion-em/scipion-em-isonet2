@@ -25,7 +25,6 @@
 # *
 # **************************************************************************
 import logging
-from multiprocessing.connection import default_family
 from typing import List
 
 from isonet2.constants import PREPARE_DATA_PROT, CTF_NONE, UNET_MEDIUM, L2, TOMOGRAMS_STAR
@@ -219,6 +218,7 @@ class ProtIsonet2Training(ProtIsonet2Base):
         self._initialize()
         pId=[]
 
+
         pId=self._insertFunctionStep(self.trainingStep,
                                      prerequisites=pId,
                                      needsGPU=True)
@@ -230,9 +230,9 @@ class ProtIsonet2Training(ProtIsonet2Base):
     def _initialize(self):
         pass
 
+
     def trainingStep(self):
-        starFile=self._getStarFile()
-        self._getTomosStarName(starFile)
+       pass
 
 
     def createOutputStep(self):
@@ -245,6 +245,46 @@ class ProtIsonet2Training(ProtIsonet2Base):
         return self._getExtraPath(TOMOGRAMS_STAR)
 
 
+    def _generateArgumets(self)->str:
+        starFile=self._getStarFile()
+        gpu = ' '.join([str(el) for el in self.getGpuList()])
+        pretrained_model=self.pretrained_model.get()
+
+        cmd = [
+            'denoise'
+            f'--star_file {starFile}',
+            f'--output_dir {self._getExtraPath()}',
+            f'--gpuID {gpu}',
+            f'--ncpus {self.ncpus.get()}',
+            f'--arch {self.arch.get()}',
+            f'--cube_size {self.cube_size.get()}',
+            f'--epochs {self.epochs.get()}',
+            f'--batch_size {self.batch_size.get()}',
+            f'--loss_func {self.loss_func.get()}',
+            f'--save_interval {self.save_interval.get()}',
+            f'--learning_rate {self.learning_rate.get()}',
+            f'--learning_rate_min {self.learning_rate_min.get()}',
+            f'--CTF_mode {self.CTF_mode.get()}',
+            f'--bfacttor {self.b_factor.get()}',
+            f'--clip_first_peak_mode {self.clip_first_peak_mode.get()}',
+            f'--snrfalloff '
+
+
+
+
+
+
+
+        ]
+
+        if pretrained_model:
+            pass
+
+        if self.mixed_precision.get():
+            cmd.append('--mixed_precision')
+
+        if self.isCTFflipped.get():
+            cmd.append('--isCTFflipped')
 
 
 
