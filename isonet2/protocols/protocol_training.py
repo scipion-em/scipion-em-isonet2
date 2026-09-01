@@ -29,7 +29,8 @@ import traceback
 from typing import List
 
 from isonet2 import Plugin
-from isonet2.constants import PREPARE_DATA_PROT, CTF_NONE, UNET_MEDIUM, L2, TOMOGRAMS_STAR
+from isonet2.constants import PREPARE_DATA_PROT, CTF_NONE, UNET_MEDIUM, L2, TOMOGRAMS_STAR, ARCH_CHOICES, \
+    LOSS_FUNC_CHOICES, CTF_MODE_CHOICES
 from isonet2.protocols.protocol_base import ProtIsonet2Base
 from pyworkflow import BETA
 from pyworkflow.protocol import PointerParam, GPU_LIST, StringParam, EnumParam, BooleanParam, FloatParam, \
@@ -63,12 +64,16 @@ class ProtIsonet2Training(ProtIsonet2Base):
                       important=True,
                       label='Isonet prepare data protocol')
 
+        form.addParam('pretrained_choice',BooleanParam,
+                      label='Load pretrained model',
+                      default=False,
+                      help='Pretrained model to continue training. Previous method, architecture, cube_size, '
+                           'CTF_mode, and metrics will be loaded.'
+                      )
         form.addParam('pretrained_model', PointerParam,
                       pointerClass='ProtIsonet2PretrainedModel',
                       label='Isonet pretrained model',
-                      allowsNull=True,
-                      help='Pretrained model to continue training. Previous method, architecture, cube_size, '
-                           'CTF_mode, and metrics will be loaded.'
+                      condition='pretrained_choice',
                       )
 
         form.addSection(label='CTF Mode')
@@ -242,6 +247,7 @@ class ProtIsonet2Training(ProtIsonet2Base):
     def createOutputStep(self):
         pass
 
+
     # -------------------------- UTILS functions ------------------------------
     def _getTomosStarName(self) -> str:
         return self._getExtraPath(TOMOGRAMS_STAR)
@@ -257,16 +263,16 @@ class ProtIsonet2Training(ProtIsonet2Base):
             f'--output_dir {self._getExtraPath()}',
             f'--gpuID {gpu}',
             f'--ncpus {self.ncpus.get()}',
-            f'--arch {self.arch.get()}',
+            f'--arch {ARCH_CHOICES[self.arch.get()]}',
             f'--cube_size {self.cube_size.get()}',
             f'--epochs {self.epochs.get()}',
             f'--batch_size {self.batch_size.get()}',
-            f'--loss_func {self.loss_func.get()}',
+            f'--loss_func {LOSS_FUNC_CHOICES[self.loss_func.get()]}',
             f'--save_interval {self.save_interval.get()}',
             f'--learning_rate {self.learning_rate.get()}',
             f'--learning_rate_min {self.learning_rate_min.get()}',
             f'--mixed_precision {self.mixed_precision.get()}',
-            f'--CTF_mode {self.CTF_mode.get()}',
+            f'--CTF_mode {CTF_MODE_CHOICES[self.CTF_mode.get()]}',
             f'--isCTFflipped {self.isCTFflipped.get()}',
             f'--do_phaseflip_input {self.do_phaseflip_input.get()}'
             f'--bfactor {self.b_factor.get()}',
