@@ -31,7 +31,7 @@ from typing import List
 
 from isonet2 import Plugin
 from isonet2.constants import PREPARE_DATA_PROT, CTF_NONE, UNET_MEDIUM, L2, TOMOGRAMS_STAR, ARCH_CHOICES, \
-    LOSS_FUNC_CHOICES, CTF_MODE_CHOICES, TRAIN_DATA_CONFIG
+    LOSS_FUNC_CHOICES, CTF_MODE_CHOICES
 from isonet2.objects import Isonet2Model
 from isonet2.protocols.protocol_base import ProtIsonet2Base
 from pyworkflow import BETA
@@ -294,7 +294,7 @@ class ProtIsonet2Training(ProtIsonet2Base):
             f'--snrfalloff {self.snr_falloff.get()}',
             f'--deconvstrength {self.deconv_strength.get()}',
             f'--highpassnyquist {self.highpass_nyquist.get()}',
-            f'--with_preview {self.with_preview.get()}',
+            f'--with_preview {self.with_preview.get()}'
 
 
         ]
