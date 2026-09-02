@@ -26,6 +26,7 @@
 # **************************************************************************
 import logging
 import traceback
+from enum import Enum
 from os.path import join, exists
 from typing import List
 
@@ -42,8 +43,8 @@ from pyworkflow.utils import Message, cyanStr, redStr, makePath
 logger = logging.getLogger(__name__)
 
 
-# class Outputobjects(Enum):
-#     model = Isonet2Model
+class Outputobjects(Enum):
+    model = Isonet2Model
 
 
 class ProtIsonet2Training(ProtIsonet2Base):
@@ -197,7 +198,7 @@ class ProtIsonet2Training(ProtIsonet2Base):
         group.addParam('with_preview', BooleanParam,
                        label='Preview during training?',
                        default=True,
-                       help='Run prediction every save interval.'
+                       help='Run prediction every saved interval.'
                        )
         group.addParam('prev_tomo_idx', StringParam,
                        label='Preview tomogram index(es)',
@@ -248,12 +249,12 @@ class ProtIsonet2Training(ProtIsonet2Base):
 
 
     def createOutputStep(self):
-        pass
-        # modelFile = self._getModelPath()
-        # if not exists(modelFile):
-        #     raise Exception(f'Model file {modelFile} was not generated.')
-        #
-        # model = Isonet2Model(model_file=modelFile)
+        modelFile = self._getModelPath()
+        if not exists(modelFile):
+            raise Exception(f'Model file {modelFile} was not generated.')
+
+        model = Isonet2Model(model_file=modelFile) #wrap in isonet2model scipion object
+        self._defineOutputs(**{Outputobjects.model.name: model})
 
         #output e relazioni
 
