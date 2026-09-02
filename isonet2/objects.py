@@ -10,4 +10,4 @@ class Isonet2Model(EMObject):
         return self._model_file.get()
 
     def __str__(self):
-        return "Isonet2 Model (path=%s)" % self.getPath()
+        return f'Isonet2 Model {self.getPath()}'
