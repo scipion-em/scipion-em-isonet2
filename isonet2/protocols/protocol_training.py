@@ -307,6 +307,8 @@ class ProtIsonet2Training(ProtIsonet2Base):
         if self.with_preview.get():
             cmd.append(f'--prev_tomo_idx {self.prev_tomo_idx.get()}')
 
+        return ' '.join(cmd)
+
     # --------------------------- INFO functions ------------------------------
 
     def _validate(self) -> List[str]:
