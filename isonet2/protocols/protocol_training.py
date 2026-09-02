@@ -225,6 +225,18 @@ class ProtIsonet2Training(ProtIsonet2Base):
 
     # --------------------------- INSERT steps functions ----------------------
     def _insertAllSteps(self):
+        # FRANCESCA
+        import os
+        fname = "/home/francesa/test_FC.txt"
+        if os.path.exists(fname):
+            os.remove(fname)
+        with open(fname, "a+") as fjj:
+            fjj.write(f'FRANCESCA--------->onDebugMode PID {os.getpid()}')
+            print(f'FRANCESCA--------->onDebugMode PID {os.getpid()}')
+        import time
+        time.sleep(10)
+        # FRANCESCA_END
+
         self._initialize()
 
         self._insertFunctionStep(self.trainingStep,needsGPU=True)
@@ -247,11 +259,12 @@ class ProtIsonet2Training(ProtIsonet2Base):
 
 
     def createOutputStep(self):
-        modelFile = self._getModelPath()
-        if not exists(modelFile):
-            raise Exception(f'Model file {modelFile} was not generated.')
-
-        model = Isonet2Model(model_file=modelFile)
+        pass
+        # modelFile = self._getModelPath()
+        # if not exists(modelFile):
+        #     raise Exception(f'Model file {modelFile} was not generated.')
+        #
+        # model = Isonet2Model(model_file=modelFile)
 
         #output e relazioni
 
