@@ -290,7 +290,7 @@ class ProtIsonet2Training(ProtIsonet2Base):
             f'--mixed_precision {self.mixed_precision.get()}',
             f'--CTF_mode {CTF_MODE_CHOICES[self.CTF_mode.get()]}',
             f'--isCTFflipped {self.isCTFflipped.get()}',
-            f'--do_phaseflip_input {self.do_phaseflip_input.get()}'
+            f'--do_phaseflip_input {self.do_phaseflip_input.get()}',
             f'--bfactor {self.b_factor.get()}',
             f'--clip_first_peak_mode {self.clip_first_peak_mode.get()}',
             f'--snrfalloff {self.snr_falloff.get()}',
