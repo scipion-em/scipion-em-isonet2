@@ -234,7 +234,7 @@ class ProtIsonet2Training(ProtIsonet2Base):
             fjj.write(f'FRANCESCA--------->onDebugMode PID {os.getpid()}')
             print(f'FRANCESCA--------->onDebugMode PID {os.getpid()}')
         import time
-        time.sleep(10)
+        time.sleep(20)
         # FRANCESCA_END
 
         self._initialize()
