@@ -71,7 +71,7 @@ class ProtIsonet2Training(ProtIsonet2Base):
                       label='Load pretrained model',
                       default=False,
                       help='Pretrained model to continue training. Previous method, architecture, cube_size, '
-                           'CTF_mode, and metrics will be loaded.'
+                           'ctf_mode, and metrics will be loaded.'
                       )
         form.addParam('pretrained_model', PointerParam,
                       pointerClass='Isonet2Model',
@@ -80,7 +80,7 @@ class ProtIsonet2Training(ProtIsonet2Base):
                       )
 
         form.addSection(label='CTF Mode')
-        form.addParam('CTF_mode', EnumParam,
+        form.addParam('ctf_mode', EnumParam,
                       label='CTF mode',
                       choices=['None', 'phase_only', 'wiener', 'network'],
                       default=CTF_NONE,
@@ -96,13 +96,13 @@ class ProtIsonet2Training(ProtIsonet2Base):
         form.addParam('isCTFflipped', BooleanParam,
                       label='Is CTF flipped?',
                       default=False,
-                      condition='CTF_mode != 0',
+                      condition='ctf_mode != 0',
                       help='Whether input tomograms are phase flipped.'
                       )
         form.addParam('do_phaseflip_input', BooleanParam,
                       label='Phase flip the input',
                       default=True,
-                      condition='CTF_mode != 0',
+                      condition='ctf_mode != 0',
                       help='Whether to apply phase flip during training.'
                       )
         form.addParam('clip_first_peak_mode', EnumParam,
@@ -110,7 +110,7 @@ class ProtIsonet2Training(ProtIsonet2Base):
                       choices=['none', 'constant clip', 'negative sine', 'cosine'],
                       default=CFP_MODE_CONSTANT_CLIP,
                       display=EnumParam.DISPLAY_HLIST,
-                      condition='CTF_mode != 0',
+                      condition='ctf_mode != 0',
                       help='Controls attenuation of overrepresented very-low-frequency CTF peak.'
                            'Options "negative sine" and "cosine" might increase low-resolution contrast.'
                       )
@@ -122,31 +122,31 @@ class ProtIsonet2Training(ProtIsonet2Base):
                            'you can use a b-factor from 200–300. '
                       )
         group = form.addGroup('CTF Deconvolution',
-                              condition='CTF_mode != 0',
+                              condition='ctf_mode != 0',
                               expertLevel=LEVEL_ADVANCED
                               )
-        group.addParam('CTF_deconvolution', BooleanParam,
+        group.addParam('ctf_deconvolution', BooleanParam,
                        label='Apply CTF Deconvolution',
                        default=False
                        )
         group.addParam('snr_falloff', FloatParam,
                        label='SNR falloff',
                        default=0,
-                       condition='CTF_deconvolution',
+                       condition='ctf_deconvolution',
                        help='Controls frequency-dependent SNR attenuation applied during deconvolution; '
                             'larger values reduce high-frequency contribution more aggressively.'
                        )
         group.addParam('deconv_strength', FloatParam,
                        label='Deconvolution strength',
                        default=1.0,
-                       condition='CTF_deconvolution',
+                       condition='ctf_deconvolution',
                        help='Scalar multiplier for deconvolution strength; increasing this emphasizes correction '
                             'and low-frequency recovery.'
                        )
         group.addParam('highpass_nyquist', FloatParam,
                        label='Highpass Nyquist',
                        default=0.02,
-                       condition='CTF_deconvolution',
+                       condition='ctf_deconvolution',
                        help='Fraction of the Nyquist used as a very-low-frequency high-pass cutoff; use to remove '
                             'large-scale intensity gradients and drift.'
                        )
@@ -283,6 +283,7 @@ class ProtIsonet2Training(ProtIsonet2Base):
         starFile = self._getStarFile()
         gpu = ' '.join([str(el) for el in self.getGpuList()])
         pretrained_model = self.pretrained_model.get()
+        ctf_mode = self.ctf_mode.get()
 
         cmd = [
             'denoise',
@@ -299,18 +300,22 @@ class ProtIsonet2Training(ProtIsonet2Base):
             f'--learning_rate {self.learning_rate.get()}',
             f'--learning_rate_min {self.learning_rate_min.get()}',
             f'--mixed_precision {self.mixed_precision.get()}',
-            f'--CTF_mode {CTF_MODE_CHOICES[self.CTF_mode.get()]}',
-            f'--isCTFflipped {self.isCTFflipped.get()}',
-            f'--do_phaseflip_input {self.do_phaseflip_input.get()}',
+            f'--ctf_mode {CTF_MODE_CHOICES[self.ctf_mode.get()]}',
             f'--bfactor {self.b_factor.get()}',
-            f'--clip_first_peak_mode {self.clip_first_peak_mode.get()}',
-            f'--snrfalloff {self.snr_falloff.get()}',
-            f'--deconvstrength {self.deconv_strength.get()}',
-            f'--highpassnyquist {self.highpass_nyquist.get()}',
             f'--with_preview {self.with_preview.get()}'
 
         ]
 
+        if not ctf_mode == CTF_MODE_CHOICES[CTF_NONE]:
+            cmd.append(f'--isCTFflipped {self.isCTFflipped.get()}')
+            cmd.append(f'--do_phaseflip_input {self.do_phaseflip_input.get()}')
+            cmd.append(f'--clip_first_peak_mode {self.clip_first_peak_mode.get()}')
+            
+            if self.ctf_deconvolution.get():
+                cmd.append(f'--snrfalloff {self.snr_falloff.get()}')
+                cmd.append(f'--deconvstrength {self.deconv_strength.get()}')
+                cmd.append(f'--highpassnyquist {self.highpass_nyquist.get()}')
+        
         if self.pretrained_choice:
             pretrainedPath = self._getPretrainedModelPath(pretrained_model)
             cmd.append(f'--pretrained_model {pretrainedPath}')
