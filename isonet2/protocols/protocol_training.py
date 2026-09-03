@@ -32,7 +32,7 @@ from typing import List
 
 from isonet2 import Plugin
 from isonet2.constants import PREPARE_DATA_PROT, CTF_NONE, UNET_MEDIUM, L2, TOMOGRAMS_STAR, ARCH_CHOICES, \
-    LOSS_FUNC_CHOICES, CTF_MODE_CHOICES
+    LOSS_FUNC_CHOICES, CTF_MODE_CHOICES, CFP_MODE_CONSTANT_CLIP
 from isonet2.objects import Isonet2Model
 from isonet2.protocols.protocol_base import ProtIsonet2Base
 from pyworkflow import BETA
@@ -65,9 +65,9 @@ class ProtIsonet2Training(ProtIsonet2Base):
         form.addParam(PREPARE_DATA_PROT, PointerParam,
                       pointerClass='ProtIsonet2PrepareData',
                       important=True,
-                      label='Isonet prepare data protocol')
+                      label='Isonet2 Prepare data protocol')
 
-        form.addParam('pretrained_choice',BooleanParam,
+        form.addParam('pretrained_choice', BooleanParam,
                       label='Load pretrained model',
                       default=False,
                       help='Pretrained model to continue training. Previous method, architecture, cube_size, '
@@ -87,6 +87,11 @@ class ProtIsonet2Training(ProtIsonet2Base):
                       display=EnumParam.DISPLAY_HLIST,
                       allowsNull=False,
                       help='CTF handling mode: "None", "phase_only", "wiener", or "network".'
+                           '"None": No CTF correction.'
+                           '"phase_only": Phase-only correction.'
+                           '"wiener": Applies CTF-shaped filter to network input.'
+                           '"network": Applier Wiener filter to network target.'
+
                       )
         form.addParam('isCTFflipped', BooleanParam,
                       label='Is CTF flipped?',
@@ -103,12 +108,11 @@ class ProtIsonet2Training(ProtIsonet2Base):
         form.addParam('clip_first_peak_mode', EnumParam,
                       label='Clip first peak mode',
                       choices=['none', 'constant clip', 'negative sine', 'cosine'],
-                      default=1,
+                      default=CFP_MODE_CONSTANT_CLIP,
                       display=EnumParam.DISPLAY_HLIST,
                       condition='CTF_mode != 0',
                       help='Controls attenuation of overrepresented very-low-frequency CTF peak.'
-                           '0: none, 1: constant clip, 2: negative sine, 3: cosine.'
-                           'Options 2 and 3 might increase low-resolution contrast.'
+                           'Options "negative sine" and "cosine" might increase low-resolution contrast.'
                       )
         form.addParam('b_factor', FloatParam,
                       label='B-factor',
@@ -117,28 +121,36 @@ class ProtIsonet2Training(ProtIsonet2Base):
                            'For cellular tomograms we recommend a b-factor of 0. For isolated samples, '
                            'you can use a b-factor from 200–300. '
                       )
-
-        form.addParam('snr_falloff', FloatParam,
-                      label='SNR falloff',
-                      default=0,
-                      expertLevel=LEVEL_ADVANCED,
-                      help='Controls frequency-dependent SNR attenuation applied during deconvolution; '
-                           'larger values reduce high-frequency contribution more aggressively.'
-                      )
-        form.addParam('deconv_strength', FloatParam,
-                      label='Deconvolution strength',
-                      default=1.0,
-                      expertLevel=LEVEL_ADVANCED,
-                      help='Scalar multiplier for deconvolution strength; increasing this emphasizes correction '
-                           'and low-frequency recovery.'
-                      )
-        form.addParam('highpass_nyquist', FloatParam,
-                      label='Highpass nyquist',
-                      default=0.02,
-                      expertLevel=LEVEL_ADVANCED,
-                      help='Fraction of the Nyquist used as a very-low-frequency high-pass cutoff; use to remove '
-                           'large-scale intensity gradients and drift.'
-                      )
+        group = form.addGroup('CTF Deconvolution',
+                              condition='CTF_mode != 0')
+        group.addParam('CTF_deconvolution', BooleanParam,
+                       label='Apply CTF Deconvolution',
+                       default=False
+                       )
+        group.addParam('snr_falloff', FloatParam,
+                       label='SNR falloff',
+                       default=0,
+                       condition='CTF_deconvolution',
+                       # expertLevel=LEVEL_ADVANCED,
+                       help='Controls frequency-dependent SNR attenuation applied during deconvolution; '
+                            'larger values reduce high-frequency contribution more aggressively.'
+                       )
+        group.addParam('deconv_strength', FloatParam,
+                       label='Deconvolution strength',
+                       default=1.0,
+                       condition='CTF_deconvolution',
+                       # expertLevel=LEVEL_ADVANCED,
+                       help='Scalar multiplier for deconvolution strength; increasing this emphasizes correction '
+                            'and low-frequency recovery.'
+                       )
+        group.addParam('highpass_nyquist', FloatParam,
+                       label='Highpass Nyquist',
+                       default=0.02,
+                       condition='CTF_deconvolution',
+                       # expertLevel=LEVEL_ADVANCED,
+                       help='Fraction of the Nyquist used as a very-low-frequency high-pass cutoff; use to remove '
+                            'large-scale intensity gradients and drift.'
+                       )
 
         form.addSection(label='Training Parameters')
         form.addParam('arch', EnumParam,
@@ -228,14 +240,12 @@ class ProtIsonet2Training(ProtIsonet2Base):
     def _insertAllSteps(self):
 
         self._initialize()
-
-        self._insertFunctionStep(self.trainingStep,needsGPU=True)
-        self._insertFunctionStep(self.createOutputStep,needsGPU=False)
+        self._insertFunctionStep(self.trainingStep, needsGPU=True)
+        self._insertFunctionStep(self.createOutputStep, needsGPU=False)
 
     # -------------------------- STEPS functions ------------------------------
     def _initialize(self):
-        makePath(self._getModelDir())
-
+        makePath(self._getModelOutDir())
 
     def trainingStep(self):
         logger.info(cyanStr(f' Training step...'))
@@ -247,29 +257,29 @@ class ProtIsonet2Training(ProtIsonet2Base):
             logger.error(redStr(f'Denoise training failed with the exception -> {e}'))
             logger.error(traceback.format_exc())
 
-
     def createOutputStep(self):
         modelFile = self._getModelPath()
         if not exists(modelFile):
             raise Exception(f'Model file {modelFile} was not generated.')
 
-        model = Isonet2Model(model_file=modelFile) #wrap in isonet2model scipion object
+        model = Isonet2Model(model_file=modelFile)  # wrap in isonet2model scipion object
         self._defineOutputs(**{Outputobjects.model.name: model})
 
-        #output e relazioni
+        # output e relazioni
 
     # -------------------------- UTILS functions ------------------------------
-    def _getModelDir(self):
+    def _getModelOutDir(self):
         return self._getExtraPath('training')
 
     def _getModelPath(self):
         arch = ARCH_CHOICES[self.arch.get()]
-        return join(self._getModelDir(),f'network_n2n_{arch}_{self.cube_size.get()}_full.pt')
+        return join(self._getModelOutDir(), f'network_n2n_{arch}_{self.cube_size.get()}_full.pt')
 
-    #getmodelfile x pretrained
+    def _getPretrainedModelPath(self, pretrained_model: Isonet2Model):
+        return pretrained_model.getPath()
 
     def _generateArguments(self) -> str:
-        output_dir=self._getModelDir()
+        output_dir = self._getModelOutDir()
         starFile = self._getStarFile()
         gpu = ' '.join([str(el) for el in self.getGpuList()])
         pretrained_model = self.pretrained_model.get()
@@ -299,11 +309,11 @@ class ProtIsonet2Training(ProtIsonet2Base):
             f'--highpassnyquist {self.highpass_nyquist.get()}',
             f'--with_preview {self.with_preview.get()}'
 
-
         ]
 
-        if pretrained_model:
-            pass
+        if self.pretrained_choice:
+            pretrainedPath = self._getPretrainedModelPath(pretrained_model)
+            cmd.append(f'--pretrained_model {pretrainedPath}')
 
         if self.with_preview.get():
             cmd.append(f'--prev_tomo_idx {self.prev_tomo_idx.get()}')
