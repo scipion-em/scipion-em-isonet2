@@ -32,7 +32,7 @@ from typing import List
 
 from isonet2 import Plugin
 from isonet2.constants import PREPARE_DATA_PROT, CTF_NONE, UNET_MEDIUM, L2, TOMOGRAMS_STAR, ARCH_CHOICES, \
-    LOSS_FUNC_CHOICES, CTF_MODE_CHOICES, CFP_MODE_CONSTANT_CLIP, LR_MIN_DEFAULT
+    LOSS_FUNC_CHOICES, CTF_MODE_CHOICES, CFP_MODE_CONSTANT_CLIP, LR_MIN_DEFAULT, NCPUS_DEF, NCPUS_DEFAULT
 from isonet2.objects import Isonet2Model
 from isonet2.protocols.protocol_base import ProtIsonet2Base
 from pyworkflow import BETA
@@ -292,13 +292,11 @@ class ProtIsonet2Training(ProtIsonet2Base):
             f'--star_file {starFile}',
             f'--output_dir {output_dir}',
             f'--gpuID {gpu}',
-            f'--ncpus {self.ncpus.get()}',
             f'--cube_size {self.cube_size.get()}',
             f'--epochs {self.epochs.get()}',
             f'--batch_size {self.batch_size.get()}',
             f'--save_interval {self.save_interval.get()}',
             f'--learning_rate {self.learning_rate.get()}',
-            f'--mixed_precision {self.mixed_precision.get()}',
             f'--CTF_mode {CTF_MODE_CHOICES[self.ctf_mode.get()]}',
             f'--bfactor {self.b_factor.get()}',
             f'--with_preview {self.with_preview.get()}'
@@ -308,7 +306,11 @@ class ProtIsonet2Training(ProtIsonet2Base):
         if self.learning_rate_min.get() != LR_MIN_DEFAULT:
             cmd.append(f'--learning_rate_min {self.learning_rate_min.get()}')
 
+        if self.ncpus.get() != NCPUS_DEFAULT:
+            cmd.append(f'--ncpus {self.ncpus.get()}')
 
+        if not self.mixed_precision.get():
+            cmd.append(f'--mixed_precision {self.mixed_precision.get()}')
 
         if arch != UNET_MEDIUM:
             cmd.append(f'--arch {ARCH_CHOICES[self.arch.get()]}')
