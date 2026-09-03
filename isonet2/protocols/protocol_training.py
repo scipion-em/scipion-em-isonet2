@@ -306,13 +306,13 @@ class ProtIsonet2Training(ProtIsonet2Base):
 
         ]
 
-        if arch != ARCH_CHOICES[UNET_MEDIUM]:
+        if arch != UNET_MEDIUM:
             cmd.append(f'--arch {ARCH_CHOICES[self.arch.get()]}')
 
-        if loss != LOSS_FUNC_CHOICES[L2]:
+        if loss != L2:
             cmd.append(f'--loss_func {LOSS_FUNC_CHOICES[self.loss_func.get()]}')
 
-        if not ctf_mode == CTF_MODE_CHOICES[CTF_NONE]:
+        if not ctf_mode == CTF_NONE:
             cmd.append(f'--isCTFflipped {self.isCTFflipped.get()}')
             cmd.append(f'--do_phaseflip_input {self.do_phaseflip_input.get()}')
             cmd.append(f'--clip_first_peak_mode {self.clip_first_peak_mode.get()}')
