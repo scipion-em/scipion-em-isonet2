@@ -86,10 +86,10 @@ class ProtIsonet2Training(ProtIsonet2Base):
                       default=CTF_NONE,
                       display=EnumParam.DISPLAY_HLIST,
                       allowsNull=False,
-                      help='CTF handling mode: "None", "phase_only", "wiener", or "network".'
-                           '"None": No CTF correction.'
-                           '"phase_only": Phase-only correction.'
-                           '"wiener": Applies CTF-shaped filter to network input.'
+                      help='CTF handling mode: "None", "phase_only", "wiener", or "network". '
+                           '"None": No CTF correction. '
+                           '"phase_only": Phase-only correction. '
+                           '"wiener": Applies CTF-shaped filter to network input. '
                            '"network": Applier Wiener filter to network target.'
 
                       )
@@ -123,7 +123,8 @@ class ProtIsonet2Training(ProtIsonet2Base):
                       )
         group = form.addGroup('CTF Deconvolution',
                               condition='CTF_mode != 0',
-                              expertLevel=LEVEL_ADVANCED)
+                              expertLevel=LEVEL_ADVANCED
+                              )
         group.addParam('CTF_deconvolution', BooleanParam,
                        label='Apply CTF Deconvolution',
                        default=False
@@ -195,7 +196,8 @@ class ProtIsonet2Training(ProtIsonet2Base):
                       label='Loss function',
                       choices=['L1', 'HUBER', 'L2'],
                       default=L2,
-                      help='Loss function to use for training: L1,Huber,L2.'
+                      expertLevel=LEVEL_ADVANCED,
+                      help='Loss function to use for training: L1, Huber, L2.'
                       )
 
         group = form.addGroup('Checkpoints & preview')
