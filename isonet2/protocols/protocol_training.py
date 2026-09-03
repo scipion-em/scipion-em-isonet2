@@ -122,7 +122,8 @@ class ProtIsonet2Training(ProtIsonet2Base):
                            'you can use a b-factor from 200–300. '
                       )
         group = form.addGroup('CTF Deconvolution',
-                              condition='CTF_mode != 0')
+                              condition='CTF_mode != 0',
+                              expertLevel=LEVEL_ADVANCED)
         group.addParam('CTF_deconvolution', BooleanParam,
                        label='Apply CTF Deconvolution',
                        default=False
@@ -131,7 +132,6 @@ class ProtIsonet2Training(ProtIsonet2Base):
                        label='SNR falloff',
                        default=0,
                        condition='CTF_deconvolution',
-                       # expertLevel=LEVEL_ADVANCED,
                        help='Controls frequency-dependent SNR attenuation applied during deconvolution; '
                             'larger values reduce high-frequency contribution more aggressively.'
                        )
@@ -139,7 +139,6 @@ class ProtIsonet2Training(ProtIsonet2Base):
                        label='Deconvolution strength',
                        default=1.0,
                        condition='CTF_deconvolution',
-                       # expertLevel=LEVEL_ADVANCED,
                        help='Scalar multiplier for deconvolution strength; increasing this emphasizes correction '
                             'and low-frequency recovery.'
                        )
@@ -147,7 +146,6 @@ class ProtIsonet2Training(ProtIsonet2Base):
                        label='Highpass Nyquist',
                        default=0.02,
                        condition='CTF_deconvolution',
-                       # expertLevel=LEVEL_ADVANCED,
                        help='Fraction of the Nyquist used as a very-low-frequency high-pass cutoff; use to remove '
                             'large-scale intensity gradients and drift.'
                        )
