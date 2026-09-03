@@ -37,7 +37,7 @@ from isonet2.objects import Isonet2Model
 from isonet2.protocols.protocol_base import ProtIsonet2Base
 from pyworkflow import BETA
 from pyworkflow.protocol import PointerParam, GPU_LIST, StringParam, EnumParam, BooleanParam, FloatParam, \
-    LEVEL_ADVANCED, IntParam, GT
+    LEVEL_ADVANCED, IntParam, GT, GE
 from pyworkflow.utils import Message, cyanStr, redStr, makePath
 
 logger = logging.getLogger(__name__)
@@ -284,6 +284,8 @@ class ProtIsonet2Training(ProtIsonet2Base):
         gpu = ' '.join([str(el) for el in self.getGpuList()])
         pretrained_model = self.pretrained_model.get()
         ctf_mode = self.ctf_mode.get()
+        arch = self.arch.get()
+        loss = self.loss_func.get()
 
         cmd = [
             'denoise',
@@ -291,11 +293,9 @@ class ProtIsonet2Training(ProtIsonet2Base):
             f'--output_dir {output_dir}',
             f'--gpuID {gpu}',
             f'--ncpus {self.ncpus.get()}',
-            f'--arch {ARCH_CHOICES[self.arch.get()]}',
             f'--cube_size {self.cube_size.get()}',
             f'--epochs {self.epochs.get()}',
             f'--batch_size {self.batch_size.get()}',
-            f'--loss_func {LOSS_FUNC_CHOICES[self.loss_func.get()]}',
             f'--save_interval {self.save_interval.get()}',
             f'--learning_rate {self.learning_rate.get()}',
             f'--learning_rate_min {self.learning_rate_min.get()}',
@@ -306,16 +306,22 @@ class ProtIsonet2Training(ProtIsonet2Base):
 
         ]
 
+        if arch != ARCH_CHOICES[UNET_MEDIUM]:
+            cmd.append(f'--arch {ARCH_CHOICES[self.arch.get()]}')
+
+        if loss != LOSS_FUNC_CHOICES[L2]:
+            cmd.append(f'--loss_func {LOSS_FUNC_CHOICES[self.loss_func.get()]}')
+
         if not ctf_mode == CTF_MODE_CHOICES[CTF_NONE]:
             cmd.append(f'--isCTFflipped {self.isCTFflipped.get()}')
             cmd.append(f'--do_phaseflip_input {self.do_phaseflip_input.get()}')
             cmd.append(f'--clip_first_peak_mode {self.clip_first_peak_mode.get()}')
-            
+
             if self.ctf_deconvolution.get():
                 cmd.append(f'--snrfalloff {self.snr_falloff.get()}')
                 cmd.append(f'--deconvstrength {self.deconv_strength.get()}')
                 cmd.append(f'--highpassnyquist {self.highpass_nyquist.get()}')
-        
+
         if self.pretrained_choice:
             pretrainedPath = self._getPretrainedModelPath(pretrained_model)
             cmd.append(f'--pretrained_model {pretrainedPath}')
