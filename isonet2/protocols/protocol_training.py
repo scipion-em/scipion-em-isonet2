@@ -300,7 +300,7 @@ class ProtIsonet2Training(ProtIsonet2Base):
             f'--learning_rate {self.learning_rate.get()}',
             f'--learning_rate_min {self.learning_rate_min.get()}',
             f'--mixed_precision {self.mixed_precision.get()}',
-            f'--ctf_mode {CTF_MODE_CHOICES[self.ctf_mode.get()]}',
+            f'--CTF_mode {CTF_MODE_CHOICES[self.ctf_mode.get()]}',
             f'--bfactor {self.b_factor.get()}',
             f'--with_preview {self.with_preview.get()}'
 
