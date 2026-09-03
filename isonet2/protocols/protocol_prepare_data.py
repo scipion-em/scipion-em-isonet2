@@ -192,6 +192,15 @@ class ProtIsonet2PrepareData(ProtIsonet2Base):
             cmd += [f'--mask_folder {self._getMasksDir()}']
         return ' '.join(cmd)
 
+    def makeDirs(self) -> None:
+        dirList = [
+            self._getOddDir(),
+            self._getEvenDir(),
+        ]
+        if self.tomoMaskDict:
+            dirList.append(self._getMasksDir())
+        makePath(*dirList)
+
     def _genZeroTiltDefocusList(self) -> List[float]:
         defocusList = []
         for tsId, ts in self.tsDict.items():
@@ -224,15 +233,6 @@ class ProtIsonet2PrepareData(ProtIsonet2Base):
             return meanDefocus
         else:
             return None
-
-    def makeDirs(self) -> None:
-        dirList = [
-            self._getOddDir(),
-            self._getEvenDir(),
-        ]
-        if self.tomoMaskDict:
-            dirList.append(self._getMasksDir())
-        makePath(*dirList)
 
     def _getConvertedOrLinkedNameOdd(self, tsId: str) -> str:
         return join(self._getOddDir(), f'{tsId}{ODD_SUFFIX}{MRC_EXT}')
