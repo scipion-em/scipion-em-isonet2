@@ -80,4 +80,4 @@ CTF_MODE_CHOICES = ['None', 'phase_only', 'wiener', 'network']
 ARCH_CHOICES = ['unet-small', 'unet-medium', 'unet-large']
 LOSS_FUNC_CHOICES = ['L2', 'Huber', 'L1']
 
-
+LR_MIN_DEFAULT = 3e-4
