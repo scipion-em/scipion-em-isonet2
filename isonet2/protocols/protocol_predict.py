@@ -27,15 +27,19 @@
 
 import logging
 
+from isonet2.constants import PREPARE_DATA_PROT
 from isonet2.protocols.protocol_base import ProtIsonet2Base
 from pyworkflow import BETA
+from pyworkflow.protocol import PointerParam, GPU_LIST, StringParam, BooleanParam, FloatParam
+from pyworkflow.utils import Message
 
 logger = logging.getLogger(__name__)
 
 
+
 class ProtIsonet2Predict(ProtIsonet2Base):
-    """Denoise for quicker noise-to-noise (n2n) training workflows for preliminary
-    tomogram testing and mask generation."""
+    """Apply a trained IsoNet model to tomograms to produce denoised or missing-wedge–corrected volumes.
+    Prediction utilizes the model's saved cube size and CTF handling options, but allows for runtime adjustments."""
 
     _label = 'predict'
     _devStatus = BETA
@@ -46,3 +50,44 @@ class ProtIsonet2Predict(ProtIsonet2Base):
         super().__init__(**kwargs)
 
     # --------------------------- DEFINE param functions ----------------------
+    def _defineParams(self, form):
+        form.addSection(label=Message.LABEL_INPUT)
+        form.addParam(PREPARE_DATA_PROT, PointerParam,
+                      pointerClass='ProtIsonet2PrepareData',
+                      important=True,
+                      label='Isonet2 Prepare data protocol.'
+                      )
+        form.addParam('model', PointerParam,
+                      pointerClass='Isonet2Model',
+                      important=True,
+                      label='Isonet2 Model',
+                      allowsNull=False,
+                      help='Select a trained Isonet2 model.'
+                      )
+        form.addParam('missingWedge_mask', BooleanParam,
+                      lable='Missing wedge mask',
+                      default=True,
+                      help='Build and apply a missing-wedge mask to cubic inputs before prediction.'
+                      )
+        form.addParam('isCTFflipped', BooleanParam,
+                      label='Is CTF flipped?',
+                      default=False,
+                      help='Whether input tomograms are phase flipped.'
+                           'Set to "Yes" if the input tomograms have been phase flipped.'
+                      )
+        form.addParam('padding_factor',FloatParam,
+                      label='Padding factor',
+                      default=1.5,
+                      help='Cubic padding factor used during tiling to reduce edge effects; '
+                           'larger padding reduces seams but increases computation.'
+                      )
+        form.addParam('tomo_idx', StringParam,
+                      label='Tomogram index',
+                      default='None',
+                      help='Process a subset of STAR entries by index.'
+                      )
+        form.addHidden(GPU_LIST, StringParam,
+                       default='0',
+                       label="Choose GPU IDs",
+                       help=""
+                       )
