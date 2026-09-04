@@ -24,6 +24,25 @@
 # *  e-mail address 'scipion@cnb.csic.es'
 # *
 # **************************************************************************
-from isonet2.protocols.protocol_predict import ProtIsonet2Predict
-from isonet2.protocols.protocol_prepare_data import ProtIsonet2PrepareData
-from isonet2.protocols.protocol_training import ProtIsonet2Training
+
+import logging
+
+from isonet2.protocols.protocol_base import ProtIsonet2Base
+from pyworkflow import BETA
+
+logger = logging.getLogger(__name__)
+
+
+class ProtIsonet2Predict(ProtIsonet2Base):
+    """Denoise for quicker noise-to-noise (n2n) training workflows for preliminary
+    tomogram testing and mask generation."""
+
+    _label = 'predict'
+    _devStatus = BETA
+
+    # _possibleOutputs = Outputobjects
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+    # --------------------------- DEFINE param functions ----------------------
