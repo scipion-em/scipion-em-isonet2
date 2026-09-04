@@ -65,7 +65,7 @@ class ProtIsonet2Predict(ProtIsonet2Base):
                       help='Select a trained Isonet2 model.'
                       )
         form.addParam('missingWedge_mask', BooleanParam,
-                      lable='Missing wedge mask',
+                      label='Missing wedge mask',
                       default=True,
                       help='Build and apply a missing-wedge mask to cubic inputs before prediction.'
                       )
