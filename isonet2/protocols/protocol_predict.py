@@ -85,6 +85,7 @@ class ProtIsonet2Predict(ProtIsonet2Base):
                       label='Tomogram index',
                       default='None',
                       help='Process a subset of STAR entries by index.'
+                           '(e.g., "1,2,4" or "5-10,15,16")'
                       )
         form.addHidden(GPU_LIST, StringParam,
                        default='0',
