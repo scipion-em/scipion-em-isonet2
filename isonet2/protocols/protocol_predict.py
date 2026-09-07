@@ -26,16 +26,22 @@
 # **************************************************************************
 
 import logging
+import traceback
+from enum import Enum
 
+from isonet2 import Plugin
 from isonet2.constants import PREPARE_DATA_PROT
 from isonet2.objects import Isonet2Model
 from isonet2.protocols.protocol_base import ProtIsonet2Base
 from pyworkflow import BETA
 from pyworkflow.protocol import PointerParam, GPU_LIST, StringParam, BooleanParam, FloatParam, GT
-from pyworkflow.utils import Message, makePath
+from pyworkflow.utils import Message, makePath, cyanStr, redStr
+from tomo.objects import SetOfTomograms
 
 logger = logging.getLogger(__name__)
 
+class Outputobjects(Enum):
+    tomograms = SetOfTomograms
 
 
 class ProtIsonet2Predict(ProtIsonet2Base):
@@ -44,8 +50,8 @@ class ProtIsonet2Predict(ProtIsonet2Base):
 
     _label = 'predict'
     _devStatus = BETA
+    _possibleOutputs = Outputobjects
 
-    # _possibleOutputs = Outputobjects
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -107,7 +113,14 @@ class ProtIsonet2Predict(ProtIsonet2Base):
         makePath(self._getModelOutDir())
 
     def predictStep(self):
-        pass
+        logger.info(cyanStr(f' Predict step...'))
+
+        try:
+            args = self._generateArguments()
+            Plugin.runIsonet2(self, args, useGpu=True)
+        except Exception as e:
+            logger.error(redStr(f'Predict step failed with the exception -> {e}'))
+            logger.error(traceback.format_exc())
 
     def createOutputStep(self):
         pass
