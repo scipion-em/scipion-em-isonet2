@@ -218,6 +218,7 @@ class ProtIsonet2Training(ProtIsonet2Base):
                        label='Preview tomogram index(es)',
                        condition='with_preview',
                        default=1,
+                       allowsNull=True,
                        help='If set, automatically predict only the tomograms listed by these indices '
                             '(e.g., "1,2,4" or "5-10,15,16")'
                        )
