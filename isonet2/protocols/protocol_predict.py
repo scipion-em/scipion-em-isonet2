@@ -33,7 +33,7 @@ from isonet2 import Plugin
 from isonet2.constants import PREPARE_DATA_PROT
 from isonet2.objects import Isonet2Model
 from isonet2.protocols.protocol_base import ProtIsonet2Base
-from pyworkflow import BETA
+from pyworkflow import BETA, join
 from pyworkflow.protocol import PointerParam, GPU_LIST, StringParam, BooleanParam, FloatParam, GT, IntParam
 from pyworkflow.utils import Message, makePath, cyanStr, redStr, copyFile
 from tomo.objects import SetOfTomograms
@@ -135,14 +135,19 @@ class ProtIsonet2Predict(ProtIsonet2Base):
 
 
     # -------------------------- UTILS functions ------------------------------
-    def _getModelOutDir(self):
+    def _getModelOutDir(self)->str:
         return self._getExtraPath('predict')
 
-    def _getModelPath(self, model:Isonet2Model):
+    def _getModelPath(self, model:Isonet2Model)->str:
         return model.getPath()
 
+    def _newStarPath(self)->str:
+        destinationStar = self._getModelOutDir()
+        return join(destinationStar,'inTomograms.star')
+
     def _generateArguments(self) -> str:
-        starFile = self._getStarFile()
+
+        starFile = self._newStarPath()
         model = self.model.get()
         modelPath = self._getModelPath(model)
         output_dir = self._getModelOutDir()
@@ -151,12 +156,19 @@ class ProtIsonet2Predict(ProtIsonet2Base):
             'predict',
             f'--star_file {starFile}',
             f'--model {modelPath}',
-            '--apply_mw_x1',
-            f'--isCTFflipped',
             f'--output_dir {output_dir}',
             f'--padding_factor {self.padding_factor.get()}',
             f'--tomo_idx {self.tomo_idx.get()}'
+
             ]
+
+
+
+        if self.apply_mw_x1.get():
+            cmd.append('--apply_mw_x1')
+
+        if self.isCTFflipped.get():
+            cmd.append('--isCTFflipped')
 
         return ' '.join(cmd)
 
