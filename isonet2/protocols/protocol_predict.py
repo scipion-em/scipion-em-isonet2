@@ -109,7 +109,7 @@ class ProtIsonet2Predict(ProtIsonet2Base):
         self._initialize()
         #copy the star file to avoid the original one to be overwritten
         sourceStar = self._getStarFile()
-        destinationStar = self._getExtraPath('inTomograms.star')
+        destinationStar = self._newStarPath()
         copyFile(sourceStar, destinationStar)
 
 
@@ -142,14 +142,12 @@ class ProtIsonet2Predict(ProtIsonet2Base):
     def _getModelPath(self, model:Isonet2Model)->str:
         return model.getPath()
 
-    # def _newStarPath(self)->str:
-    #     return abspath(join(self._getExtraPath(),'inTomograms.star'))
-
-
+    def _newStarPath(self)->str:
+        return self._getExtraPath('inTomograms.star')
 
     def _generateArguments(self) -> str:
 
-        starFile = self._getExtraPath('inTomograms.star')
+        starFile = self._newStarPath()
         model = self.model.get()
         modelPath = self._getModelPath(model)
         output_dir = self._getModelOutDir()
@@ -163,9 +161,7 @@ class ProtIsonet2Predict(ProtIsonet2Base):
             f'--gpuID {gpu}',
             f'--padding_factor {self.padding_factor.get()}',
             f'--tomo_idx {self.tomo_idx.get()}'
-            #f'--output_prefix {""}'
             ]
-
 
 
         if self.missingWedge_mask.get():
