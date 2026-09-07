@@ -162,9 +162,8 @@ class ProtIsonet2Predict(ProtIsonet2Base):
             f'--output_dir {output_dir}',
             f'--gpuID {gpu}',
             f'--padding_factor {self.padding_factor.get()}',
-            f'--tomo_idx {self.tomo_idx.get()}',
-            f'--output_prefix: str  = "",'
-
+            f'--tomo_idx {self.tomo_idx.get()}'
+            #f'--output_prefix {""}'
             ]
 
 
