@@ -28,6 +28,7 @@
 import logging
 import traceback
 from enum import Enum
+from os.path import abspath
 
 from isonet2 import Plugin
 from isonet2.constants import PREPARE_DATA_PROT
@@ -108,7 +109,7 @@ class ProtIsonet2Predict(ProtIsonet2Base):
         self._initialize()
         #copy the star file to avoid the original one to be overwritten
         sourceStar = self._getStarFile()
-        destinationStar = self._getExtraPath()
+        destinationStar = self._getExtraPath('inTomograms.star')
         copyFile(sourceStar, destinationStar)
 
 
@@ -142,8 +143,7 @@ class ProtIsonet2Predict(ProtIsonet2Base):
         return model.getPath()
 
     def _newStarPath(self)->str:
-        destinationStar = self._getExtraPath()
-        return join(destinationStar,'inTomograms.star')
+        return abspath(join(self._getExtraPath(),'inTomograms.star'))
 
 
 
