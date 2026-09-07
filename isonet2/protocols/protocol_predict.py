@@ -90,7 +90,7 @@ class ProtIsonet2Predict(ProtIsonet2Base):
                       help='Cubic padding factor used during tiling to reduce edge effects; '
                            'larger padding reduces seams but increases computation.'
                       )
-        form.addParam('tomo_idx', IntParam,
+        form.addParam('tomo_idx', StringParam,
                       label='Tomogram index',
                       allowsNull=True,
                       help='Process a subset of STAR entries by index.'
@@ -155,7 +155,7 @@ class ProtIsonet2Predict(ProtIsonet2Base):
             f'--isCTFflipped',
             f'--output_dir {output_dir}',
             f'--padding_factor {self.padding_factor.get()}',
-            f'tomo_idx {self.tomo_idx.get()}'
+            f'--tomo_idx {self.tomo_idx.get()}'
             ]
 
         return ' '.join(cmd)
