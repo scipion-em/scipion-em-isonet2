@@ -108,7 +108,7 @@ class ProtIsonet2Predict(ProtIsonet2Base):
         self._initialize()
         #copy the star file to avoid the original one to be overwritten
         sourceStar = self._getStarFile()
-        destinationStar = self._getModelOutDir()
+        destinationStar = self._getExtraPath()
         copyFile(sourceStar, destinationStar)
 
 
@@ -138,11 +138,12 @@ class ProtIsonet2Predict(ProtIsonet2Base):
     def _getModelOutDir(self)->str:
         return self._getExtraPath('predict')
 
+
     def _getModelPath(self, model:Isonet2Model)->str:
         return model.getPath()
 
     def _newStarPath(self)->str:
-        destinationStar = self._getModelOutDir()
+        destinationStar = self._getExtraPath()
         return join(destinationStar,'inTomograms.star')
 
     def _generateArguments(self) -> str:
