@@ -28,10 +28,11 @@
 import logging
 
 from isonet2.constants import PREPARE_DATA_PROT
+from isonet2.objects import Isonet2Model
 from isonet2.protocols.protocol_base import ProtIsonet2Base
 from pyworkflow import BETA
-from pyworkflow.protocol import PointerParam, GPU_LIST, StringParam, BooleanParam, FloatParam
-from pyworkflow.utils import Message
+from pyworkflow.protocol import PointerParam, GPU_LIST, StringParam, BooleanParam, FloatParam, GT
+from pyworkflow.utils import Message, makePath
 
 logger = logging.getLogger(__name__)
 
@@ -78,6 +79,7 @@ class ProtIsonet2Predict(ProtIsonet2Base):
         form.addParam('padding_factor',FloatParam,
                       label='Padding factor',
                       default=1.5,
+                      validators=[GT(0)],
                       help='Cubic padding factor used during tiling to reduce edge effects; '
                            'larger padding reduces seams but increases computation.'
                       )
@@ -92,3 +94,52 @@ class ProtIsonet2Predict(ProtIsonet2Base):
                        label="Choose GPU IDs",
                        help=""
                        )
+
+    # --------------------------- INSERT steps functions ----------------------
+    def _insertAllSteps(self):
+
+        self._initialize()
+        self._insertFunctionStep(self.predictStep, needsGPU=True)
+        self._insertFunctionStep(self.createOutputStep, needsGPU=False)
+
+    # -------------------------- STEPS functions ------------------------------
+    def _initialize(self):
+        makePath(self._getModelOutDir())
+
+    def predictStep(self):
+        pass
+
+    def createOutputStep(self):
+        pass
+
+
+
+    # -------------------------- UTILS functions ------------------------------
+    def _getModelOutDir(self):
+        return self._getExtraPath('predict')
+
+    def _getModelPath(self, model:Isonet2Model):
+        return model.getPath()
+
+    def _generateArguments(self) -> str:
+        starFile = self._getStarFile()
+        model = self.model.get()
+        modelPath = self._getModelPath(model)
+        output_dir = self._getModelOutDir()
+
+        cmd =[
+            'predict',
+            f'--star_file {starFile}',
+            f'--model {modelPath}',
+            '--apply_mw_x1',
+            f'--isCTFflipped',
+            f'--output_dir {output_dir}',
+            f'--padding_factor {self.padding_factor.get()}',
+            f'tomo_idx {self.tomo_idx.get()}'
+            ]
+
+        return ' '.join(cmd)
+
+
+
+

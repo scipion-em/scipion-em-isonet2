@@ -132,6 +132,7 @@ class ProtIsonet2Training(ProtIsonet2Base):
         group.addParam('snr_falloff', FloatParam,
                        label='SNR falloff',
                        default=0,
+                       validators=[GE(0)],
                        condition='ctf_deconvolution',
                        help='Controls frequency-dependent SNR attenuation applied during deconvolution; '
                             'larger values reduce high-frequency contribution more aggressively.'
@@ -139,6 +140,7 @@ class ProtIsonet2Training(ProtIsonet2Base):
         group.addParam('deconv_strength', FloatParam,
                        label='Deconvolution strength',
                        default=1.0,
+                       validators=[GT(0)],
                        condition='ctf_deconvolution',
                        help='Scalar multiplier for deconvolution strength; increasing this emphasizes correction '
                             'and low-frequency recovery.'
@@ -302,7 +304,7 @@ class ProtIsonet2Training(ProtIsonet2Base):
             f'--with_preview {self.with_preview.get()}'
 
         ]
-
+        ###
         if self.learning_rate_min.get() != LR_MIN_DEFAULT:
             cmd.append(f'--learning_rate_min {self.learning_rate_min.get()}')
 
@@ -317,7 +319,7 @@ class ProtIsonet2Training(ProtIsonet2Base):
 
         if loss != L2:
             cmd.append(f'--loss_func {LOSS_FUNC_CHOICES[self.loss_func.get()]}')
-
+        ###
         if not ctf_mode == CTF_NONE:
             cmd.append(f'--isCTFflipped {self.isCTFflipped.get()}')
             cmd.append(f'--do_phaseflip_input {self.do_phaseflip_input.get()}')
