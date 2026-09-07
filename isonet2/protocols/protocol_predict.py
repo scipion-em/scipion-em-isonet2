@@ -138,7 +138,6 @@ class ProtIsonet2Predict(ProtIsonet2Base):
     def _getModelOutDir(self)->str:
         return self._getExtraPath('predict')
 
-
     def _getModelPath(self, model:Isonet2Model)->str:
         return model.getPath()
 
@@ -146,26 +145,31 @@ class ProtIsonet2Predict(ProtIsonet2Base):
         destinationStar = self._getExtraPath()
         return join(destinationStar,'inTomograms.star')
 
+
+
     def _generateArguments(self) -> str:
 
         starFile = self._newStarPath()
         model = self.model.get()
         modelPath = self._getModelPath(model)
         output_dir = self._getModelOutDir()
+        gpu = ' '.join([str(el) for el in self.getGpuList()])
 
         cmd =[
             'predict',
             f'--star_file {starFile}',
             f'--model {modelPath}',
             f'--output_dir {output_dir}',
+            f'--gpuID {gpu}',
             f'--padding_factor {self.padding_factor.get()}',
-            f'--tomo_idx {self.tomo_idx.get()}'
+            f'--tomo_idx {self.tomo_idx.get()}',
+            f'--output_prefix: str  = "",'
 
             ]
 
 
 
-        if self.apply_mw_x1.get():
+        if self.missingWedge_mask.get():
             cmd.append('--apply_mw_x1')
 
         if self.isCTFflipped.get():
