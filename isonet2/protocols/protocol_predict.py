@@ -35,7 +35,7 @@ from isonet2.objects import Isonet2Model
 from isonet2.protocols.protocol_base import ProtIsonet2Base
 from pyworkflow import BETA
 from pyworkflow.protocol import PointerParam, GPU_LIST, StringParam, BooleanParam, FloatParam, GT
-from pyworkflow.utils import Message, makePath, cyanStr, redStr
+from pyworkflow.utils import Message, makePath, cyanStr, redStr, copyFile
 from tomo.objects import SetOfTomograms
 
 logger = logging.getLogger(__name__)
@@ -55,6 +55,7 @@ class ProtIsonet2Predict(ProtIsonet2Base):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        self.failedTsIds = []
 
     # --------------------------- DEFINE param functions ----------------------
     def _defineParams(self, form):
@@ -105,6 +106,12 @@ class ProtIsonet2Predict(ProtIsonet2Base):
     def _insertAllSteps(self):
 
         self._initialize()
+        #copy the star file to avoid the original one to be overwritten
+        sourceStar = self._getStarFile()
+        destinationStar = self._getModelOutDir()
+        copyFile(sourceStar, destinationStar)
+
+
         self._insertFunctionStep(self.predictStep, needsGPU=True)
         self._insertFunctionStep(self.createOutputStep, needsGPU=False)
 
