@@ -142,14 +142,14 @@ class ProtIsonet2Predict(ProtIsonet2Base):
     def _getModelPath(self, model:Isonet2Model)->str:
         return model.getPath()
 
-    def _newStarPath(self)->str:
-        return abspath(join(self._getExtraPath(),'inTomograms.star'))
+    # def _newStarPath(self)->str:
+    #     return abspath(join(self._getExtraPath(),'inTomograms.star'))
 
 
 
     def _generateArguments(self) -> str:
 
-        starFile = self._newStarPath()
+        starFile = self._getExtraPath('inTomograms.star')
         model = self.model.get()
         modelPath = self._getModelPath(model)
         output_dir = self._getModelOutDir()
