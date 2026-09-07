@@ -301,25 +301,14 @@ class ProtIsonet2Training(ProtIsonet2Base):
             f'--learning_rate {self.learning_rate.get()}',
             f'--CTF_mode {CTF_MODE_CHOICES[self.ctf_mode.get()]}',
             f'--bfactor {self.b_factor.get()}',
-            f'--with_preview {self.with_preview.get()}'
-
+            f'--with_preview {self.with_preview.get()}',
+            f'--learning_rate_min {self.learning_rate_min.get()}',
+            f'--ncpus {self.ncpus.get()}',
+            f'--mixed_precision {self.mixed_precision.get()}',
+            f'--arch {ARCH_CHOICES[self.arch.get()]}',
+            f'--loss_func {LOSS_FUNC_CHOICES[self.loss_func.get()]}'
         ]
-        ###
-        if self.learning_rate_min.get() != LR_MIN_DEFAULT:
-            cmd.append(f'--learning_rate_min {self.learning_rate_min.get()}')
 
-        if self.ncpus.get() != NCPUS_DEFAULT:
-            cmd.append(f'--ncpus {self.ncpus.get()}')
-
-        if not self.mixed_precision.get():
-            cmd.append(f'--mixed_precision {self.mixed_precision.get()}')
-
-        if arch != UNET_MEDIUM:
-            cmd.append(f'--arch {ARCH_CHOICES[self.arch.get()]}')
-
-        if loss != L2:
-            cmd.append(f'--loss_func {LOSS_FUNC_CHOICES[self.loss_func.get()]}')
-        ###
         if not ctf_mode == CTF_NONE:
             cmd.append(f'--isCTFflipped {self.isCTFflipped.get()}')
             cmd.append(f'--do_phaseflip_input {self.do_phaseflip_input.get()}')
