@@ -34,7 +34,7 @@ from isonet2.constants import PREPARE_DATA_PROT
 from isonet2.objects import Isonet2Model
 from isonet2.protocols.protocol_base import ProtIsonet2Base
 from pyworkflow import BETA
-from pyworkflow.protocol import PointerParam, GPU_LIST, StringParam, BooleanParam, FloatParam, GT
+from pyworkflow.protocol import PointerParam, GPU_LIST, StringParam, BooleanParam, FloatParam, GT, IntParam
 from pyworkflow.utils import Message, makePath, cyanStr, redStr, copyFile
 from tomo.objects import SetOfTomograms
 
@@ -90,9 +90,9 @@ class ProtIsonet2Predict(ProtIsonet2Base):
                       help='Cubic padding factor used during tiling to reduce edge effects; '
                            'larger padding reduces seams but increases computation.'
                       )
-        form.addParam('tomo_idx', StringParam,
+        form.addParam('tomo_idx', IntParam,
                       label='Tomogram index',
-                      default='None',
+                      allowsNull=True,
                       help='Process a subset of STAR entries by index.'
                            '(e.g., "1,2,4" or "5-10,15,16")'
                       )
