@@ -56,6 +56,7 @@ class ProtIsonet2PrepareData(ProtIsonet2Base):
         self.ctfDict = {}
         self.tomoMaskDict = {}
         self.failedTsIds = []
+        self.tsIdList = String()
         self._tomoFile = String()
 
     # --------------------------- DEFINE param functions ----------------------
@@ -170,7 +171,10 @@ class ProtIsonet2PrepareData(ProtIsonet2Base):
         if not exists(tomoStarFile):
             raise Exception(f'Tomo star file {tomoStarFile} was not generated.')
         self.setTomoSStarFile(tomoStarFile)
-        self._store(self._tomoFile)
+        tsIds = [tsId for tsId in self.tsDict.keys() if tsId not in self.failedTsIds]
+        self.tsIdList.set(' '.join(tsIds))
+        self._store()
+
 
     # -------------------------- UTILS functions ------------------------------
     def _genPrepareStarCmd(self, acq: TomoAcquisition) -> str:

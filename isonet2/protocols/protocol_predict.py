@@ -56,6 +56,7 @@ class ProtIsonet2Predict(ProtIsonet2Base):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+
         self.failedTsIds = []
 
     # --------------------------- DEFINE param functions ----------------------
