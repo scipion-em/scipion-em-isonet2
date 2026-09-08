@@ -94,7 +94,7 @@ class ProtIsonet2Training(ProtIsonet2Base):
 
                       )
         form.addParam('isCTFflipped', BooleanParam,
-                      label='Is CTF flipped?',
+                      label='Is the tomogram CTF flipped?',
                       default=False,
                       condition='ctf_mode != 0',
                       help='Whether input tomograms are phase flipped.'
@@ -185,6 +185,7 @@ class ProtIsonet2Training(ProtIsonet2Base):
         form.addParam('learning_rate', FloatParam,
                       label='Learning rate',
                       default=3e-4,
+                      expertLevel=LEVEL_ADVANCED,
                       validators=[GT(0)],
                       help='Initial learning rate.'
                       )
@@ -192,6 +193,7 @@ class ProtIsonet2Training(ProtIsonet2Base):
                       label='Minimum learning rate',
                       default=3e-4,
                       expertLevel=LEVEL_ADVANCED,
+                      validators=[GT(0)],
                       help='Minimum learning rate for scheduler.'
                       )
         form.addParam('loss_func', EnumParam,
@@ -200,6 +202,12 @@ class ProtIsonet2Training(ProtIsonet2Base):
                       default=L2,
                       expertLevel=LEVEL_ADVANCED,
                       help='Loss function to use for training: L1, Huber, L2.'
+                      )
+        form.addParam('mixed_precision', BooleanParam,
+                      label='Use mixed precision?',
+                      default=True,
+                      expertLevel=LEVEL_ADVANCED,
+                      help='If set to "Yes", float16/mixed precision to reduce VRAM and speed up training is used.'
                       )
 
         group = form.addGroup('Checkpoints & preview')
@@ -222,21 +230,14 @@ class ProtIsonet2Training(ProtIsonet2Base):
                             '(e.g., "1,2,4" or "5-10,15,16")'
                        )
 
-        form.addSection(label='Additional Parameters')
-        form.addParam('ncpus', IntParam,
-                      label='Number of cpus',
-                      default=16,
-                      help='Number of CPUs to use for data processing.')
-        form.addParam('mixed_precision', BooleanParam,
-                      label='Use mixed precision?',
-                      default=True,
-                      help='If set to "Yes", float16/mixed precision to reduce VRAM and speed up training is used.')
 
         form.addHidden(GPU_LIST, StringParam,
                        default='0',
                        label="Choose GPU IDs",
                        help=""
                        )
+        form.addParallelSection(threads=8,mpi=0)
+
 
     # --------------------------- INSERT steps functions ----------------------
     def _insertAllSteps(self):
@@ -283,17 +284,16 @@ class ProtIsonet2Training(ProtIsonet2Base):
     def _generateArguments(self) -> str:
         output_dir = self._getModelOutDir()
         starFile = self._getStarFile()
-        gpu = ' '.join([str(el) for el in self.getGpuList()])
+        gpu = ','.join([str(el) for el in self.getGpuList()])
         pretrained_model = self.pretrained_model.get()
         ctf_mode = self.ctf_mode.get()
-        arch = self.arch.get()
-        loss = self.loss_func.get()
+
 
         cmd = [
             'denoise',
             f'--star_file {starFile}',
             f'--output_dir {output_dir}',
-            f'--gpuID {gpu}',
+            f'--gpuID "{gpu}"',
             f'--cube_size {self.cube_size.get()}',
             f'--epochs {self.epochs.get()}',
             f'--batch_size {self.batch_size.get()}',
@@ -302,7 +302,7 @@ class ProtIsonet2Training(ProtIsonet2Base):
             f'--CTF_mode {CTF_MODE_CHOICES[self.ctf_mode.get()]}',
             f'--bfactor {self.b_factor.get()}',
             f'--learning_rate_min {self.learning_rate_min.get()}',
-            f'--ncpus {self.ncpus.get()}',
+            f'--ncpus {self.numberOfThreads.get()}',
             f'--mixed_precision {self.mixed_precision.get()}',
             f'--arch {ARCH_CHOICES[self.arch.get()]}',
             f'--loss_func {LOSS_FUNC_CHOICES[self.loss_func.get()]}'
