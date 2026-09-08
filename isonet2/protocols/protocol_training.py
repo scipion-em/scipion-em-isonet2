@@ -211,7 +211,7 @@ class ProtIsonet2Training(ProtIsonet2Base):
                        )
         group.addParam('with_preview', BooleanParam,
                        label='Preview during training?',
-                       default=True,
+                       default=False,
                        help='Run prediction every saved interval.'
                        )
         group.addParam('prev_tomo_idx', StringParam,
@@ -301,13 +301,15 @@ class ProtIsonet2Training(ProtIsonet2Base):
             f'--learning_rate {self.learning_rate.get()}',
             f'--CTF_mode {CTF_MODE_CHOICES[self.ctf_mode.get()]}',
             f'--bfactor {self.b_factor.get()}',
-            f'--with_preview {self.with_preview.get()}',
             f'--learning_rate_min {self.learning_rate_min.get()}',
             f'--ncpus {self.ncpus.get()}',
             f'--mixed_precision {self.mixed_precision.get()}',
             f'--arch {ARCH_CHOICES[self.arch.get()]}',
             f'--loss_func {LOSS_FUNC_CHOICES[self.loss_func.get()]}'
         ]
+
+        if self.with_preview.get():
+            cmd.append(f'--with_preview {self.with_preview.get()}')
 
         if not ctf_mode == CTF_NONE:
             cmd.append(f'--isCTFflipped {self.isCTFflipped.get()}')
