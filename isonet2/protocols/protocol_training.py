@@ -305,11 +305,12 @@ class ProtIsonet2Training(ProtIsonet2Base):
             f'--ncpus {self.numberOfThreads.get()}',
             f'--mixed_precision {self.mixed_precision.get()}',
             f'--arch {ARCH_CHOICES[self.arch.get()]}',
-            f'--loss_func {LOSS_FUNC_CHOICES[self.loss_func.get()]}'
+            f'--loss_func {LOSS_FUNC_CHOICES[self.loss_func.get()]}',
+            f'--with_preview {self.with_preview.get()}'
         ]
 
-        if self.with_preview.get():
-            cmd.append(f'--with_preview {self.with_preview.get()}')
+
+
 
         if not ctf_mode == CTF_NONE:
             cmd.append(f'--isCTFflipped {self.isCTFflipped.get()}')
