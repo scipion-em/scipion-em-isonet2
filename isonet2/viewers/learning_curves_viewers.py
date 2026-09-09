@@ -1,6 +1,6 @@
 from matplotlib import pyplot as plt
 import pyworkflow.viewer as pwviewer
-from isonet2.protocols import ProtIsonet2Training
+from isonet2.protocols.protocol_training import ProtIsonet2Training
 from pwem.viewers import ImageView
 
 
