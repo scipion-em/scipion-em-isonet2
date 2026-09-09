@@ -5,7 +5,7 @@ from pwem.viewers import ImageView
 
 
 
-class DeepFinderLCurvesViewer(pwviewer.Viewer):
+class Isonet2CurvesViewer(pwviewer.Viewer):
     _label = 'Learning Curves Viewer'
     _targets = [ProtIsonet2Training]
 
