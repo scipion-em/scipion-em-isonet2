@@ -159,7 +159,7 @@ class ProtIsonet2Predict(ProtIsonet2Base):
         model = self.model.get()
         modelPath = self._getModelPath(model)
         output_dir = self._getModelOutDir()
-        gpu = ' '.join([str(el) for el in self.getGpuList()])
+        gpu = ','.join([str(el) for el in self.getGpuList()])
 
         cmd = [
             'predict',
