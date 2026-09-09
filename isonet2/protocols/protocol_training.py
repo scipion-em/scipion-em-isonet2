@@ -243,6 +243,7 @@ class ProtIsonet2Training(ProtIsonet2Base):
     def _insertAllSteps(self):
 
         self._initialize()
+        self._copyStar()
         self._insertFunctionStep(self.trainingStep, needsGPU=True)
         self._insertFunctionStep(self.createOutputStep, needsGPU=False)
 
@@ -283,7 +284,7 @@ class ProtIsonet2Training(ProtIsonet2Base):
 
     def _generateArguments(self) -> str:
         output_dir = self._getModelOutDir()
-        starFile = self._getStarFile()
+        starFile = self._newStarPath()
         gpu = ','.join([str(el) for el in self.getGpuList()])
         pretrained_model = self.pretrained_model.get()
         ctf_mode = self.ctf_mode.get()
