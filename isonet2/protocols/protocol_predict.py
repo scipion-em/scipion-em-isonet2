@@ -40,6 +40,7 @@ from pyworkflow import BETA, join
 from pyworkflow.protocol import PointerParam, GPU_LIST, StringParam, BooleanParam, FloatParam, GT, IntParam
 from pyworkflow.utils import Message, makePath, cyanStr, redStr, copyFile
 from tomo.objects import SetOfTomograms, Tomogram
+from tomo.utils import getTsIdsDicts
 
 logger = logging.getLogger(__name__)
 
@@ -180,18 +181,21 @@ class ProtIsonet2Predict(ProtIsonet2Base):
         tomoFiles = sorted(glob.glob(self._getModelOutDir('*.mrc')))
         protPrepare = self._getFormAttrib(PREPARE_DATA_PROT)
         tsIds = protPrepare.getTsIdList()
-        tomoIn = protPrepare.getTomo()
+        tomoSetIn = protPrepare.getTomoSet()
+
+        inTomoDict = getTsIdsDicts(tomoSetIn, present_ts_ids=tsIds)
 
 
         outputSet = SetOfTomograms.create(self._getPath(), template='tomograms%s.sqlite')
-        outputSet.copyInfo(tomoIn)
+        outputSet.copyInfo(tomoSetIn)
 
         for tsId in tsIds:
             for tomoFile in tomoFiles:
                 if f'_{tsId}_' in tomoFile:
                     tomo = Tomogram()
+                    inTomo = inTomoDict[tsId]
+                    tomo.copyInfo(inTomo)
                     tomo.setFileName(tomoFile)
-                    tomo.setSamplingRate(outputSet.getSamplingRate())
                     outputSet.append(tomo)
                     break
 
