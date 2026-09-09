@@ -24,7 +24,7 @@
 # *  e-mail address 'scipion@cnb.csic.es'
 # *
 # **************************************************************************
-
+import glob
 import logging
 import traceback
 from enum import Enum
@@ -35,11 +35,13 @@ from isonet2.constants import PREPARE_DATA_PROT
 from isonet2.objects import Isonet2Model
 from isonet2.protocols.protocol_base import ProtIsonet2Base
 from pyworkflow import BETA, join
+from pyworkflow.object import List
 from pyworkflow.protocol import PointerParam, GPU_LIST, StringParam, BooleanParam, FloatParam, GT, IntParam
 from pyworkflow.utils import Message, makePath, cyanStr, redStr, copyFile
-from tomo.objects import SetOfTomograms
+from tomo.objects import SetOfTomograms, Tomogram
 
 logger = logging.getLogger(__name__)
+
 
 class Outputobjects(Enum):
     tomograms = SetOfTomograms
@@ -52,7 +54,6 @@ class ProtIsonet2Predict(ProtIsonet2Base):
     _label = 'predict'
     _devStatus = BETA
     _possibleOutputs = Outputobjects
-
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -85,7 +86,7 @@ class ProtIsonet2Predict(ProtIsonet2Base):
                       help='Whether input tomograms are phase flipped.'
                            'Set to "Yes" if the input tomograms have been phase flipped.'
                       )
-        form.addParam('padding_factor',FloatParam,
+        form.addParam('padding_factor', FloatParam,
                       label='Padding factor',
                       default=1.5,
                       validators=[GT(0)],
@@ -108,7 +109,7 @@ class ProtIsonet2Predict(ProtIsonet2Base):
     def _insertAllSteps(self):
 
         self._initialize()
-        #copy the star file to avoid the original one to be overwritten
+        # copy the star file to avoid the original one to be overwritten
         self._copyStar()
 
         self._insertFunctionStep(self.predictStep, needsGPU=True)
@@ -129,16 +130,27 @@ class ProtIsonet2Predict(ProtIsonet2Base):
             logger.error(traceback.format_exc())
 
     def createOutputStep(self):
-        pass
+        logger.info(cyanStr(f' Registering the output...'))
+        outTomoSet = self._createOutputSet()
+        outTomoSet.write()
+        self._store(outTomoSet)
+
+        self._defineOutputs(**{self._possibleOutputs.tomograms.name: outTomoSet})
+        self._defineSourceRelation(self._getFormAttrib(PREPARE_DATA_PROT), outTomoSet)
+
+
 
 
 
     # -------------------------- UTILS functions ------------------------------
-    def _getModelOutDir(self)->str:
-        return self._getExtraPath('predict')
+    def _getModelOutDir(self, *paths) -> str:
+        return self._getExtraPath('predict', *paths)
 
-    def _getModelPath(self, model:Isonet2Model)->str:
+    def _getModelPath(self, model: Isonet2Model) -> str:
         return model.getPath()
+
+    def getTsIdList(self) -> List[str]:
+        return self.tsIdList.get().split(' ')
 
     def _generateArguments(self) -> str:
 
@@ -148,7 +160,7 @@ class ProtIsonet2Predict(ProtIsonet2Base):
         output_dir = self._getModelOutDir()
         gpu = ' '.join([str(el) for el in self.getGpuList()])
 
-        cmd =[
+        cmd = [
             'predict',
             f'--star_file {starFile}',
             f'--model {modelPath}',
@@ -156,8 +168,7 @@ class ProtIsonet2Predict(ProtIsonet2Base):
             f'--gpuID {gpu}',
             f'--padding_factor {self.padding_factor.get()}',
             f'--tomo_idx {self.tomo_idx.get()}'
-            ]
-
+        ]
 
         if self.missingWedge_mask.get():
             cmd.append('--apply_mw_x1')
@@ -167,6 +178,22 @@ class ProtIsonet2Predict(ProtIsonet2Base):
 
         return ' '.join(cmd)
 
+    def _createOutputSet(self) -> SetOfTomograms:
+        tomoFiles = sorted(glob.glob(self._getModelOutDir('*.mrc')))
+        protPrepare = self._getFormAttrib(PREPARE_DATA_PROT)
+        tsIds = protPrepare.getTsIdList()
 
+        outputSet = SetOfTomograms.create(self._getPath(), template='tomograms%s.sqlite')
+
+        for tsId in tsIds:
+            for tomoFile in tomoFiles:
+                if f'_{tsId}_' in tomoFile:
+                    tomo = Tomogram()
+                    tomo.setFileName(tomoFile)
+                    tomo.setTsId(tsId)
+                    outputSet.append(tomo)
+                    break
+
+        return outputSet
 
 
