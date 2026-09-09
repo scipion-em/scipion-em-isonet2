@@ -150,9 +150,6 @@ class ProtIsonet2Predict(ProtIsonet2Base):
     def _getModelPath(self, model: Isonet2Model) -> str:
         return model.getPath()
 
-    def getTsIdList(self) -> List[str]:
-        return self.tsIdList.get().split(' ')
-
     def _generateArguments(self) -> str:
 
         starFile = self._newStarPath()

@@ -265,6 +265,9 @@ class ProtIsonet2PrepareData(ProtIsonet2Base):
     def _getTomosStarName(self) -> str:
         return self._getExtraPath(TOMOGRAMS_STAR)
 
+    def getTsIdList(self) -> List[str]:
+        return self.tsIdList.get().split(' ')
+
     # -------------------------- INFO functions ------------------------------
     def _validate(self) -> List[str]:
         errors = []
