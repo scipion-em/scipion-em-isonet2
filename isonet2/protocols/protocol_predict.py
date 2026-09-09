@@ -29,13 +29,14 @@ import logging
 import traceback
 from enum import Enum
 from os.path import abspath
+from typing import List
 
 from isonet2 import Plugin
 from isonet2.constants import PREPARE_DATA_PROT
 from isonet2.objects import Isonet2Model
 from isonet2.protocols.protocol_base import ProtIsonet2Base
 from pyworkflow import BETA, join
-from pyworkflow.object import List
+
 from pyworkflow.protocol import PointerParam, GPU_LIST, StringParam, BooleanParam, FloatParam, GT, IntParam
 from pyworkflow.utils import Message, makePath, cyanStr, redStr, copyFile
 from tomo.objects import SetOfTomograms, Tomogram
@@ -129,15 +130,15 @@ class ProtIsonet2Predict(ProtIsonet2Base):
             logger.error(redStr(f'Predict step failed with the exception -> {e}'))
             logger.error(traceback.format_exc())
 
-    # def createOutputStep(self):
-    #     logger.info(cyanStr(f' Registering the output...'))
-    #     outTomoSet = self._createOutputSet()
-    #     outTomoSet.write()
-    #     self._store(outTomoSet)
-    #
-    #     self._defineOutputs(**{self._possibleOutputs.tomograms.name: outTomoSet})
-    #     self._defineSourceRelation(self._getFormAttrib(PREPARE_DATA_PROT), outTomoSet)
-    #
+    def createOutputStep(self):
+        logger.info(cyanStr(f' Registering the output...'))
+        outTomoSet = self._createOutputSet()
+        outTomoSet.write()
+        self._store(outTomoSet)
+
+        self._defineOutputs(**{self._possibleOutputs.tomograms.name: outTomoSet})
+        self._defineSourceRelation(self._getFormAttrib(PREPARE_DATA_PROT), outTomoSet)
+
 
 
 
@@ -177,23 +178,23 @@ class ProtIsonet2Predict(ProtIsonet2Base):
             cmd.append('--isCTFflipped')
 
         return ' '.join(cmd)
-    #
-    # def _createOutputSet(self) -> SetOfTomograms:
-    #     tomoFiles = sorted(glob.glob(self._getModelOutDir('*.mrc')))
-    #     protPrepare = self._getFormAttrib(PREPARE_DATA_PROT)
-    #     tsIds = protPrepare.getTsIdList()
-    #
-    #     outputSet = SetOfTomograms.create(self._getPath(), template='tomograms%s.sqlite')
-    #
-    #     for tsId in tsIds:
-    #         for tomoFile in tomoFiles:
-    #             if f'_{tsId}_' in tomoFile:
-    #                 tomo = Tomogram()
-    #                 tomo.setFileName(tomoFile)
-    #                 tomo.setTsId(tsId)
-    #                 outputSet.append(tomo)
-    #                 break
-    #
-    #     return outputSet
+
+    def _createOutputSet(self) -> SetOfTomograms:
+        tomoFiles = sorted(glob.glob(self._getModelOutDir('*.mrc')))
+        protPrepare = self._getFormAttrib(PREPARE_DATA_PROT)
+        tsIds = protPrepare.getTsIdList()
+
+        outputSet = SetOfTomograms.create(self._getPath(), template='tomograms%s.sqlite')
+
+        for tsId in tsIds:
+            for tomoFile in tomoFiles:
+                if f'_{tsId}_' in tomoFile:
+                    tomo = Tomogram()
+                    tomo.setFileName(tomoFile)
+                    tomo.setTsId(tsId)
+                    outputSet.append(tomo)
+                    break
+
+        return outputSet
 
 
