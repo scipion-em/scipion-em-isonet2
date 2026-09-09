@@ -29,6 +29,7 @@ from typing import Union, Optional
 from isonet2.constants import PREPARE_DATA_PROT
 from pwem.protocols import EMProtocol
 from pyworkflow.object import Pointer
+from pyworkflow.utils import copyFile
 from tomo.objects import SetOfTomograms, SetOfTiltSeries,SetOfCTFTomoSeries
 
 
@@ -47,3 +48,13 @@ class ProtIsonet2Base(EMProtocol):
     def _getStarFile(self):
         protPrepare = self._getFormAttrib(PREPARE_DATA_PROT)
         return protPrepare.getTomoStarFile()
+
+    def _newStarPath(self)->str:
+        return self._getExtraPath('inTomograms.star')
+
+    def _copyStar(self):
+        sourceStar = self._getStarFile()
+        destinationStar = self._newStarPath()
+        copyFile(sourceStar, destinationStar)
+
+
