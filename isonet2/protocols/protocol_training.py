@@ -24,6 +24,7 @@
 # *  e-mail address 'scipion@cnb.csic.es'
 # *
 # **************************************************************************
+import glob
 import logging
 import traceback
 from enum import Enum
@@ -38,7 +39,7 @@ from isonet2.protocols.protocol_base import ProtIsonet2Base
 from pyworkflow import BETA
 from pyworkflow.protocol import PointerParam, GPU_LIST, StringParam, EnumParam, BooleanParam, FloatParam, \
     LEVEL_ADVANCED, IntParam, GT, GE
-from pyworkflow.utils import Message, cyanStr, redStr, makePath
+from pyworkflow.utils import Message, cyanStr, redStr, makePath, removeBaseExt
 
 logger = logging.getLogger(__name__)
 
@@ -262,18 +263,17 @@ class ProtIsonet2Training(ProtIsonet2Base):
             logger.error(traceback.format_exc())
 
     def createOutputStep(self):
-        modelFile = self._getModelPath()
-        if not exists(modelFile):
-            raise Exception(f'Model file {modelFile} was not generated.')
+        modelFiles = sorted(glob.glob(self._getModelOutDir('*_full.pt')), reverse=True)
+        for modelFile in modelFiles:
+            model = Isonet2Model(model_file=modelFile)
+            modelEpoch = removeBaseExt(modelFile).replace(f'network_n2n_{ARCH_CHOICES[self.arch.get()]}_{self.cube_size.get()}_','')
+            self._defineOutputs(**{Outputobjects.model.name + f'_{modelEpoch}': model})
 
-        model = Isonet2Model(model_file=modelFile)  # wrap in isonet2model scipion object
-        self._defineOutputs(**{Outputobjects.model.name: model})
 
-        # output e relazioni
 
     # -------------------------- UTILS functions ------------------------------
-    def _getModelOutDir(self):
-        return self._getExtraPath('training')
+    def _getModelOutDir(self,*paths)->str:
+        return self._getExtraPath('training',*paths)
 
     def _getModelPath(self):
         arch = ARCH_CHOICES[self.arch.get()]
