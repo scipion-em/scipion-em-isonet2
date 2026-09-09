@@ -180,15 +180,18 @@ class ProtIsonet2Predict(ProtIsonet2Base):
         tomoFiles = sorted(glob.glob(self._getModelOutDir('*.mrc')))
         protPrepare = self._getFormAttrib(PREPARE_DATA_PROT)
         tsIds = protPrepare.getTsIdList()
+        tomoIn = protPrepare.getTomo()
+
 
         outputSet = SetOfTomograms.create(self._getPath(), template='tomograms%s.sqlite')
+        outputSet.copyInfo(tomoIn)
 
         for tsId in tsIds:
             for tomoFile in tomoFiles:
                 if f'_{tsId}_' in tomoFile:
                     tomo = Tomogram()
                     tomo.setFileName(tomoFile)
-                    tomo.setTsId(tsId)
+                    tomo.setSamplingRate(outputSet.getSamplingRate())
                     outputSet.append(tomo)
                     break
 

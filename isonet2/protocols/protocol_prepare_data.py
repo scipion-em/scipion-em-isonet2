@@ -268,6 +268,9 @@ class ProtIsonet2PrepareData(ProtIsonet2Base):
     def getTsIdList(self) -> List[str]:
         return self.tsIdList.get().split(' ')
 
+    def getTomo(self):
+        return self._getFormAttrib(IN_TOMOS).get()
+
     # -------------------------- INFO functions ------------------------------
     def _validate(self) -> List[str]:
         errors = []
