@@ -110,7 +110,7 @@ class ProtIsonet2MakeMask(ProtIsonet2Base):
 
     # -------------------------- STEPS functions ------------------------------
     def _initialize(self):
-        self._copyStar()
+        self._copyStar(protocol=PREDICT_PROT)
 
     def makeMaskStep(self):
         logger.info(cyanStr(f' Make Mask step...'))

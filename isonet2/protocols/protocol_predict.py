@@ -139,8 +139,6 @@ class ProtIsonet2Predict(ProtIsonet2Base):
         outTomoSet = self._createOutputSet()
         outTomoSet.write()
 
-
-
         tomoStarFile = self._getTomosStarName()
         if not exists(tomoStarFile):
             raise Exception(f'Tomo star file {tomoStarFile} was not generated.')

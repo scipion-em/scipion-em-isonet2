@@ -45,17 +45,19 @@ class ProtIsonet2Base(EMProtocol):
         else:
             return inTsPointer if returnPointer else inTsPointer.get()
 
-    def _getStarFile(self):
-        protPrepare = self._getFormAttrib(PREPARE_DATA_PROT)
+    def _getStarFile(self, protocol:str = PREPARE_DATA_PROT) -> str:
+        protPrepare = self._getFormAttrib(protocol)
         return protPrepare.getTomoStarFile()
 
     def _newStarPath(self)->str:
         return self._getExtraPath('inTomograms.star')
 
-    def _copyStar(self):
-        sourceStar = self._getStarFile()
+    def _copyStar(self, protocol: str = PREPARE_DATA_PROT):
+        sourceStar = self._getStarFile(protocol)
         destinationStar = self._newStarPath()
         copyFile(sourceStar, destinationStar)
+
+
 
 
 
