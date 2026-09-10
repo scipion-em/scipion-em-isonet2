@@ -133,7 +133,7 @@ class ProtIsonet2MakeMask(ProtIsonet2Base):
             'make_mask',
             f'--star_file {starFile}',
             f'--output_dir {output_dir}',
-            f'--input_column "rlnDenoisedTomoName"',
+            f'--input_column rlnDenoisedTomoName',
             f'--patch_size {self.patch_size.get()}',
             f'--density_percentage {self.density_percentage.get()}',
             f'--std_percentage {self.std_percentage.get()}',
