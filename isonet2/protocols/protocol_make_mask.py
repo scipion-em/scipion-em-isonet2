@@ -162,12 +162,9 @@ class ProtIsonet2MakeMask(ProtIsonet2Base):
         outTomoMasks = SetOfTomoMasks.create(self._getPath(), template='tomomasks%s.sqlite')
 
         tomoFiles = sorted(glob.glob(self._getExtraPath('*_mask.mrc')))
-        protPrepare = self._getFormAttrib(PREPARE_DATA_PROT)
-        tsIds = protPrepare.getTsIdList()
-        tomoSetIn = protPrepare.getTomoSet()
+        protPredict = self._getFormAttrib(PREDICT_PROT)
 
-        inTomoDict = getTsIdsDicts(tomoSetIn, present_ts_ids=tsIds)
-
+        tomoSetIn = protPredict.tomograms
         outTomoMasks.copyInfo(tomoSetIn)
 
         for tsId in tsIds:
