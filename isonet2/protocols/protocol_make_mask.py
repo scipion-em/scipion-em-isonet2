@@ -26,6 +26,7 @@
 # **************************************************************************
 import logging
 import traceback
+from enum import Enum
 
 from isonet2 import Plugin
 from isonet2.constants import PREPARE_DATA_PROT
@@ -33,9 +34,12 @@ from isonet2.protocols.protocol_base import ProtIsonet2Base
 from pyworkflow import BETA
 from pyworkflow.protocol import PointerParam, ElementGroup, IntParam, GT, FloatParam, StringParam
 from pyworkflow.utils import Message, redStr, cyanStr
+from tomo.objects import SetOfTomoMasks
 
 logger = logging.getLogger(__name__)
 
+class Outputobjects(Enum):
+    masks = SetOfTomoMasks
 
 class ProtIsonet2MakeMask(ProtIsonet2Base):
     """Generate masks to prioritize regions of interest.
@@ -136,6 +140,10 @@ class ProtIsonet2MakeMask(ProtIsonet2Base):
             f'--tomo_idx {self.tomo_idx.get()}'
 
         ]
+        return ' '.join(cmd)
+
+    def _createOutputSet(self) -> SetOfTomoMasks:
+        pass
 
 
 
