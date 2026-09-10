@@ -24,6 +24,7 @@
 # *  e-mail address 'scipion@cnb.csic.es'
 # *
 # **************************************************************************
+import glob
 import logging
 import traceback
 from enum import Enum
@@ -34,7 +35,8 @@ from isonet2.protocols.protocol_base import ProtIsonet2Base
 from pyworkflow import BETA
 from pyworkflow.protocol import PointerParam, ElementGroup, IntParam, GT, FloatParam, StringParam
 from pyworkflow.utils import Message, redStr, cyanStr
-from tomo.objects import SetOfTomoMasks
+from tomo.objects import SetOfTomoMasks, TomoMask
+from tomo.utils import getTsIdsDicts
 
 logger = logging.getLogger(__name__)
 
@@ -123,7 +125,20 @@ class ProtIsonet2MakeMask(ProtIsonet2Base):
             logger.error(traceback.format_exc())
 
     def createOutputStep(self):
-        pass
+        logger.info(cyanStr(f' Creating the masks...'))
+
+        outTomoMasks = self._createOutputSet()
+        outTomoMasks.write()
+
+        # tomoStarFile = self._getTomosStarName()
+        # if not exists(tomoStarFile):
+        #     raise Exception(f'Tomo star file {tomoStarFile} was not generated.')
+        # self.setTomoSStarFile(tomoStarFile)
+
+        self._store()
+
+        self._defineOutputs(**{self._possibleOutputs.tomograms.name: outTomoMasks})
+        self._defineSourceRelation(self._getFormAttrib(PREPARE_DATA_PROT), outTomoMasks)
 
     def _generateArguments(self) -> str:
         output_dir = self._getExtraPath()
@@ -143,14 +158,28 @@ class ProtIsonet2MakeMask(ProtIsonet2Base):
         ]
         return ' '.join(cmd)
 
-    # def _createOutputSet(self) -> SetOfTomoMasks:
-    #     outTomoMasks = SetOfTomoMasks.create(self._getPath(), template='tomomasks%s.sqlite')
-    #
-    #     protPrepare = self._getFormAttrib(PREPARE_DATA_PROT)
-    #     tsIds = protPrepare.getTsIdList()
-    #     tomoSetIn = protPrepare.getTomoSet()
-    #
-    #     outTomoMasks.copyInfo(tomoSetIn)
-    #
-    #     for tsId in tsIds:
-    #
+    def _createOutputSet(self) -> SetOfTomoMasks:
+        outTomoMasks = SetOfTomoMasks.create(self._getPath(), template='tomomasks%s.sqlite')
+
+        tomoFiles = sorted(glob.glob(self._getExtraPath('*_mask.mrc')))
+        protPrepare = self._getFormAttrib(PREPARE_DATA_PROT)
+        tsIds = protPrepare.getTsIdList()
+        tomoSetIn = protPrepare.getTomoSet()
+
+        inTomoDict = getTsIdsDicts(tomoSetIn, present_ts_ids=tsIds)
+
+        outTomoMasks.copyInfo(tomoSetIn)
+
+        for tsId in tsIds:
+            for tomoFile in tomoFiles:
+                if f'_{tsId}_' in tomoFile:
+                    mask = TomoMask()
+                    inTomo = inTomoDict[tsId]
+                    mask.copyInfo(inTomo)
+                    mask.setFileName(tomoFile)
+                    outTomoMasks.append(mask)
+                    break
+
+        return outTomoMasks
+
+
