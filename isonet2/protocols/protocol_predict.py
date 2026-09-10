@@ -119,7 +119,7 @@ class ProtIsonet2Predict(ProtIsonet2Base):
 
     # -------------------------- STEPS functions ------------------------------
     def _initialize(self):
-        makePath(self._getModelOutDir())
+        pass
 
     def predictStep(self):
         logger.info(cyanStr(f' Predict step...'))
@@ -145,9 +145,6 @@ class ProtIsonet2Predict(ProtIsonet2Base):
 
 
     # -------------------------- UTILS functions ------------------------------
-    def _getModelOutDir(self, *paths) -> str:
-        return self._getExtraPath('predict', *paths)
-
     def _getModelPath(self, model: Isonet2Model) -> str:
         return model.getPath()
 
@@ -156,7 +153,7 @@ class ProtIsonet2Predict(ProtIsonet2Base):
         starFile = self._newStarPath()
         model = self.model.get()
         modelPath = self._getModelPath(model)
-        output_dir = self._getModelOutDir()
+        output_dir = self._getExtraPath()
         gpu = ','.join([str(el) for el in self.getGpuList()])
 
         cmd = [
@@ -178,7 +175,7 @@ class ProtIsonet2Predict(ProtIsonet2Base):
         return ' '.join(cmd)
 
     def _createOutputSet(self) -> SetOfTomograms:
-        tomoFiles = sorted(glob.glob(self._getModelOutDir('*.mrc')))
+        tomoFiles = sorted(glob.glob(self._getExtraPath('*.mrc')))
         protPrepare = self._getFormAttrib(PREPARE_DATA_PROT)
         tsIds = protPrepare.getTsIdList()
         tomoSetIn = protPrepare.getTomoSet()

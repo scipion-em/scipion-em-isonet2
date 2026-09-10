@@ -250,7 +250,7 @@ class ProtIsonet2Training(ProtIsonet2Base):
 
     # -------------------------- STEPS functions ------------------------------
     def _initialize(self):
-        makePath(self._getModelOutDir())
+       pass
 
     def trainingStep(self):
         logger.info(cyanStr(f' Training step...'))
@@ -263,7 +263,7 @@ class ProtIsonet2Training(ProtIsonet2Base):
             logger.error(traceback.format_exc())
 
     def createOutputStep(self):
-        modelFiles = sorted(glob.glob(self._getModelOutDir('*_full.pt')), reverse=True)
+        modelFiles = sorted(glob.glob(self._getExtraPath('*_full.pt')), reverse=True)
         for modelFile in modelFiles:
             model = Isonet2Model(model_file=modelFile)
             modelEpoch = removeBaseExt(modelFile).replace(f'network_n2n_{ARCH_CHOICES[self.arch.get()]}_{self.cube_size.get()}_','')
@@ -272,18 +272,16 @@ class ProtIsonet2Training(ProtIsonet2Base):
 
 
     # -------------------------- UTILS functions ------------------------------
-    def _getModelOutDir(self,*paths)->str:
-        return self._getExtraPath('training',*paths)
 
     def _getModelPath(self):
         arch = ARCH_CHOICES[self.arch.get()]
-        return join(self._getModelOutDir(), f'network_n2n_{arch}_{self.cube_size.get()}_full.pt')
+        return join(self._getExtraPath(), f'network_n2n_{arch}_{self.cube_size.get()}_full.pt')
 
     def _getPretrainedModelPath(self, pretrained_model: Isonet2Model):
         return pretrained_model.getPath()
 
     def _generateArguments(self) -> str:
-        output_dir = self._getModelOutDir()
+        output_dir = self._getExtraPath()
         starFile = self._newStarPath()
         gpu = ','.join([str(el) for el in self.getGpuList()])
         pretrained_model = self.pretrained_model.get()

@@ -10,7 +10,7 @@ class Isonet2CurvesViewer(pwviewer.Viewer):
     _targets = [ProtIsonet2Training]
 
     def _visualize(self, obj, **kwargs):
-        view = Isonet2ImageView(self.protocol._getModelOutDir('loss_full.png'))
+        view = Isonet2ImageView(self.protocol._getExtraPath('loss_full.png'))
         view._tkParent = self.getTkRoot()
         return [view]
 
