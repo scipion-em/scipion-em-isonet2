@@ -98,8 +98,8 @@ class ProtIsonet2Predict(ProtIsonet2Base):
         form.addParam('tomo_idx', StringParam,
                       label='Tomogram index',
                       allowsNull=True,
-                      help='Process a subset of STAR entries by index.'
-                           '(e.g., "1,2,4" or "5-10,15,16")'
+                      help='If set, process only the tomograms listed by these indices '
+                           '(e.g., "1,2,4" or "5-10,15,16").'
                       )
         form.addHidden(GPU_LIST, StringParam,
                        default='0',

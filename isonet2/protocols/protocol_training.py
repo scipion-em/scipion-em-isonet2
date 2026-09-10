@@ -28,18 +28,18 @@ import glob
 import logging
 import traceback
 from enum import Enum
-from os.path import join, exists
+from os.path import join
 from typing import List
 
 from isonet2 import Plugin
-from isonet2.constants import PREPARE_DATA_PROT, CTF_NONE, UNET_MEDIUM, L2, TOMOGRAMS_STAR, ARCH_CHOICES, \
-    LOSS_FUNC_CHOICES, CTF_MODE_CHOICES, CFP_MODE_CONSTANT_CLIP, LR_MIN_DEFAULT, NCPUS_DEFAULT, NCPUS_DEFAULT
+from isonet2.constants import PREPARE_DATA_PROT, CTF_NONE, UNET_MEDIUM, L2, ARCH_CHOICES, \
+    LOSS_FUNC_CHOICES, CTF_MODE_CHOICES, CFP_MODE_CONSTANT_CLIP
 from isonet2.objects import Isonet2Model
 from isonet2.protocols.protocol_base import ProtIsonet2Base
 from pyworkflow import BETA
 from pyworkflow.protocol import PointerParam, GPU_LIST, StringParam, EnumParam, BooleanParam, FloatParam, \
     LEVEL_ADVANCED, IntParam, GT, GE
-from pyworkflow.utils import Message, cyanStr, redStr, makePath, removeBaseExt
+from pyworkflow.utils import Message, cyanStr, redStr, removeBaseExt
 
 logger = logging.getLogger(__name__)
 
