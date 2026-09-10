@@ -38,8 +38,10 @@ from tomo.objects import SetOfTomoMasks
 
 logger = logging.getLogger(__name__)
 
+
 class Outputobjects(Enum):
     masks = SetOfTomoMasks
+
 
 class ProtIsonet2MakeMask(ProtIsonet2Base):
     """Generate masks to prioritize regions of interest.
@@ -127,7 +129,6 @@ class ProtIsonet2MakeMask(ProtIsonet2Base):
         output_dir = self._getExtraPath()
         starFile = self._newStarPath()
 
-
         cmd = [
             'make_mask',
             f'--star_file {starFile}',
@@ -142,12 +143,14 @@ class ProtIsonet2MakeMask(ProtIsonet2Base):
         ]
         return ' '.join(cmd)
 
-    def _createOutputSet(self) -> SetOfTomoMasks:
-        pass
-
-
-
-
-
-
-
+    # def _createOutputSet(self) -> SetOfTomoMasks:
+    #     outTomoMasks = SetOfTomoMasks.create(self._getPath(), template='tomomasks%s.sqlite')
+    #
+    #     protPrepare = self._getFormAttrib(PREPARE_DATA_PROT)
+    #     tsIds = protPrepare.getTsIdList()
+    #     tomoSetIn = protPrepare.getTomoSet()
+    #
+    #     outTomoMasks.copyInfo(tomoSetIn)
+    #
+    #     for tsId in tsIds:
+    #

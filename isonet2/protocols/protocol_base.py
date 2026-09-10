@@ -26,7 +26,7 @@
 # **************************************************************************
 from typing import Union, Optional
 
-from isonet2.constants import PREPARE_DATA_PROT
+from isonet2.constants import PREPARE_DATA_PROT, TOMOGRAMS_STAR
 from pwem.protocols import EMProtocol
 from pyworkflow.object import Pointer
 from pyworkflow.utils import copyFile
@@ -56,5 +56,7 @@ class ProtIsonet2Base(EMProtocol):
         sourceStar = self._getStarFile()
         destinationStar = self._newStarPath()
         copyFile(sourceStar, destinationStar)
+
+
 
 
