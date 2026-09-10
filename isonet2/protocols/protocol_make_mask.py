@@ -117,7 +117,7 @@ class ProtIsonet2MakeMask(ProtIsonet2Base):
 
         try:
             args = self._generateArguments()
-            Plugin.runIsonet2(self, args, useGpu=True)
+            Plugin.runIsonet2(self, args, useGpu=False)
         except Exception as e:
             logger.error(redStr(f'Make mask failed with the exception -> {e}'))
             logger.error(traceback.format_exc())
