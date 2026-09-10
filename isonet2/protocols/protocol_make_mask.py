@@ -65,7 +65,7 @@ class ProtIsonet2MakeMask(ProtIsonet2Base):
                       )
         form.addParam('tomo_idx', StringParam,
                       label='Tomogram index',
-                      allowsNull=True,
+                      default = 'None',
                       help='If set, process only the tomograms listed by these indices '
                            '(e.g., "1,2,4" or "5-10,15,16").'
                       )
