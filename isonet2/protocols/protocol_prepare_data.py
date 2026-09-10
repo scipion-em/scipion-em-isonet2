@@ -247,9 +247,6 @@ class ProtIsonet2PrepareData(ProtIsonet2Base):
     def _getConvertedOrLinkedNameMask(self, tsId: str) -> str:
         return join(self._getMasksDir(), f'{tsId}{MASK_SUFFIX}{MRC_EXT}')
 
-    def getTomoStarFile(self) -> str:
-        return self._tomoFile.get()
-
     def _getOddDir(self) -> str:
         return self._getExtraPath(ODD_DIR)
 
@@ -265,11 +262,7 @@ class ProtIsonet2PrepareData(ProtIsonet2Base):
     def getTomoSet(self):
         return self._getFormAttrib(IN_TOMOS)
 
-    def _getTomosStarName(self) -> str:
-        return self._getExtraPath(TOMOGRAMS_STAR)
 
-    def setTomoSStarFile(self, val: str) -> None:
-        self._tomoFile.set(val)
 
     # -------------------------- INFO functions ------------------------------
     def _validate(self) -> List[str]:

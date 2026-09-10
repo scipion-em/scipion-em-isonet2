@@ -28,7 +28,7 @@ from typing import Union, Optional
 
 from isonet2.constants import PREPARE_DATA_PROT, TOMOGRAMS_STAR
 from pwem.protocols import EMProtocol
-from pyworkflow.object import Pointer
+from pyworkflow.object import Pointer, String
 from pyworkflow.utils import copyFile
 from tomo.objects import SetOfTomograms, SetOfTiltSeries,SetOfCTFTomoSeries
 
@@ -36,6 +36,7 @@ from tomo.objects import SetOfTomograms, SetOfTiltSeries,SetOfCTFTomoSeries
 class ProtIsonet2Base(EMProtocol):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        self._tomoFile = String()
 
     def _getFormAttrib(self, attribName: str, returnPointer: bool = False) -> Optional[Union[SetOfTiltSeries,
     SetOfTomograms, SetOfCTFTomoSeries, Pointer]]:
@@ -58,7 +59,12 @@ class ProtIsonet2Base(EMProtocol):
         copyFile(sourceStar, destinationStar)
 
 
+    def getTomoStarFile(self) -> str:
+        return self._tomoFile.get()
 
+    def _getTomosStarName(self) -> str:
+        return self._getExtraPath(TOMOGRAMS_STAR)
 
-
+    def setTomoSStarFile(self, val: str) -> None:
+        self._tomoFile.set(val)
 
