@@ -29,7 +29,7 @@ import traceback
 from enum import Enum
 
 from isonet2 import Plugin
-from isonet2.constants import PREPARE_DATA_PROT
+from isonet2.constants import PREPARE_DATA_PROT, PREDICT_PROT
 from isonet2.protocols.protocol_base import ProtIsonet2Base
 from pyworkflow import BETA
 from pyworkflow.protocol import PointerParam, ElementGroup, IntParam, GT, FloatParam, StringParam
@@ -56,10 +56,10 @@ class ProtIsonet2MakeMask(ProtIsonet2Base):
     # --------------------------- DEFINE param functions -----------------
     def _defineParams(self, form):
         form.addSection(label=Message.LABEL_INPUT)
-        form.addParam(PREPARE_DATA_PROT, PointerParam,
-                      pointerClass='ProtIsonet2PrepareData',
+        form.addParam(PREDICT_PROT, PointerParam,
+                      pointerClass='ProtIsonet2Predict',
                       important=True,
-                      label='Isonet2 Prepare data protocol'
+                      label='Isonet2 Predict Protocol'
                       )
         form.addParam('tomo_idx', StringParam,
                       label='Tomogram index',
@@ -136,7 +136,7 @@ class ProtIsonet2MakeMask(ProtIsonet2Base):
             f'--patch_size {self.patch_size.get()}',
             f'--density_percentage {self.density_percentage.get()}',
             f'--std_percentage {self.std_percentage.get()}',
-            f'z_crop {self.z_crop.get()}',
+            f'--z_crop {self.z_crop.get()}',
             f'--tomo_idx {self.tomo_idx.get()}'
 
         ]
