@@ -52,7 +52,7 @@ class ProtIsonet2MakeMask(ProtIsonet2Base):
     _label = 'Isonet2 make mask'
     _devStatus = BETA
 
-    # _possibleOutputs = Outputobjects
+     _possibleOutputs = Outputobjects
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
