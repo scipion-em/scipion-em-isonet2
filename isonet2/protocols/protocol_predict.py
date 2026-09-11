@@ -113,15 +113,13 @@ class ProtIsonet2Predict(ProtIsonet2Base):
     def _insertAllSteps(self):
 
         self._initialize()
-        # copy the star file to avoid the original one to be overwritten
-        self._copyStar()
-
         self._insertFunctionStep(self.predictStep, needsGPU=True)
         self._insertFunctionStep(self.createOutputStep, needsGPU=False)
 
     # -------------------------- STEPS functions ------------------------------
     def _initialize(self):
-        pass
+        # copy the star file to avoid the original one to be overwritten
+        self._copyStar()
 
     def predictStep(self):
         logger.info(cyanStr(f' Predict step...'))
@@ -148,7 +146,6 @@ class ProtIsonet2Predict(ProtIsonet2Base):
 
         self._defineOutputs(**{self._possibleOutputs.tomograms.name: outTomoSet})
         self._defineSourceRelation(self._getFormAttrib(PREPARE_DATA_PROT), outTomoSet)
-
 
 
 
@@ -215,5 +212,4 @@ class ProtIsonet2Predict(ProtIsonet2Base):
                     break
 
         return outputSet
-
 

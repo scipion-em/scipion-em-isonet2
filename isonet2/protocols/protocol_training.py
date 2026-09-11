@@ -90,9 +90,8 @@ class ProtIsonet2Training(ProtIsonet2Base):
                       help='CTF handling mode: "None", "phase_only", "wiener", or "network". '
                            '"None": No CTF correction. '
                            '"phase_only": Phase-only correction. '
-                           '"wiener": Applies CTF-shaped filter to network input. '
-                           '"network": Applier Wiener filter to network target.'
-
+                           '"wiener":Applier Wiener filter to network target.'
+                           '"network": Applies CTF-shaped filter to network input. '
                       )
         form.addParam('isCTFflipped', BooleanParam,
                       label='Is the tomogram CTF flipped?',
@@ -244,13 +243,12 @@ class ProtIsonet2Training(ProtIsonet2Base):
     def _insertAllSteps(self):
 
         self._initialize()
-        self._copyStar()
         self._insertFunctionStep(self.trainingStep, needsGPU=True)
         self._insertFunctionStep(self.createOutputStep, needsGPU=False)
 
     # -------------------------- STEPS functions ------------------------------
     def _initialize(self):
-       pass
+       self._copyStar()
 
     def trainingStep(self):
         logger.info(cyanStr(f' Training step...'))
@@ -339,6 +337,7 @@ class ProtIsonet2Training(ProtIsonet2Base):
         lr_min = self.learning_rate_min.get()
         save_interval = self.save_interval.get()
         epochs = self.epochs.get()
+        highpass = self.highpass_nyquist.get()
 
         if cube_size < 64 or cube_size % 16 != 0:
             valmsg.append('Cube size must be higher than 64 and a multiple of 16.')
@@ -349,4 +348,9 @@ class ProtIsonet2Training(ProtIsonet2Base):
         if save_interval > epochs:
             valmsg.append('Save interval cannot be greater than the total number of epochs.')
 
+        if not (0 <= highpass < 1):
+            valmsg.append('Highpass Nyquist must be between 0 and 1.')
+
         return valmsg
+
+
