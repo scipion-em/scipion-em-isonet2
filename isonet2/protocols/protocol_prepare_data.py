@@ -217,7 +217,7 @@ class ProtIsonet2PrepareData(ProtIsonet2Base):
     @staticmethod
     def _getZeroTiltDefocus(ts: TiltSeries, ctf: CTFTomoSeries) -> Optional[float]:
         tiList = sorted([ti.clone() for ti in ts.iterItems()], key=lambda ti: ti.getFileName())
-        ctfList = sorted([ctfTomo.clone() for ctfTomo in ctf.iterItems()], key=lambda ti: ti.getFileName())
+        ctfList = [ctfTomo.clone() for ctfTomo in ctf.iterItems()]
 
         # Find the tilt-image with the tilt angle closest to 0.
         tiZeroTilt = min(tiList, key=lambda ti: abs(ti.getTiltAngle()))
