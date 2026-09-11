@@ -143,7 +143,7 @@ class ProtIsonet2MakeMask(ProtIsonet2Base):
 
         self._store()
 
-        self._defineOutputs(**{self._possibleOutputs.tomograms.name: outTomoMasks})
+        self._defineOutputs(**{self._possibleOutputs.masks.name: outTomoMasks})
         self._defineSourceRelation(self._getFormAttrib(PREDICT_PROT), outTomoMasks)
 
 
