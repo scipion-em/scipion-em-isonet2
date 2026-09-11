@@ -209,6 +209,7 @@ class ProtIsonet2Predict(ProtIsonet2Base):
                     tomo = Tomogram()
                     inTomo = inTomoDict[tsId]
                     tomo.copyInfo(inTomo)
+                    tomo.setTsId(tsId)
                     tomo.setFileName(tomoFile)
                     outputSet.append(tomo)
                     break

@@ -167,12 +167,12 @@ class ProtIsonet2MakeMask(ProtIsonet2Base):
         tomoSetIn = protPredict.tomograms
         outTomoMasks.copyInfo(tomoSetIn)
 
-        for tsId in tsIds:
+        for tomo in tomoSetIn:
+            tsId = tomo.getTsId()
             for tomoFile in tomoFiles:
                 if f'_{tsId}_' in tomoFile:
                     mask = TomoMask()
-                    inTomo = inTomoDict[tsId]
-                    mask.copyInfo(inTomo)
+                    mask.copyInfo(tomo)
                     mask.setFileName(tomoFile)
                     outTomoMasks.append(mask)
                     break
