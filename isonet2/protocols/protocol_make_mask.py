@@ -144,7 +144,7 @@ def createOutputStep(self):
     self._store()
 
     self._defineOutputs(**{self._possibleOutputs.tomograms.name: outTomoMasks})
-    self._defineSourceRelation(self._getFormAttrib(PREPARE_DATA_PROT), outTomoMasks)
+    self._defineSourceRelation(self._getFormAttrib(PREDICT_PROT), outTomoMasks)
 
 
 def _generateArguments(self) -> str:
