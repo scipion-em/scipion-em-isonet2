@@ -55,134 +55,134 @@ class ProtIsonet2MakeMask(ProtIsonet2Base):
     _possibleOutputs = Outputobjects
 
 
-def __init__(self, **kwargs):
-    super().__init__(**kwargs)
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
 
-# --------------------------- DEFINE param functions -----------------
-def _defineParams(self, form):
-    form.addSection(label=Message.LABEL_INPUT)
-    form.addParam(PREDICT_PROT, PointerParam,
-                  pointerClass='ProtIsonet2Predict',
-                  important=True,
-                  label='Isonet2 Predict Protocol'
-                  )
-    form.addParam('tomo_idx', StringParam,
-                  label='Tomogram index',
-                  default='None',
-                  help='If set, process only the tomograms listed by these indices '
-                       '(e.g., "1,2,4" or "5-10,15,16").'
-                  )
+    # --------------------------- DEFINE param functions -----------------
+    def _defineParams(self, form):
+        form.addSection(label=Message.LABEL_INPUT)
+        form.addParam(PREDICT_PROT, PointerParam,
+                      pointerClass='ProtIsonet2Predict',
+                      important=True,
+                      label='Isonet2 Predict Protocol'
+                      )
+        form.addParam('tomo_idx', StringParam,
+                      label='Tomogram index',
+                      default='None',
+                      help='If set, process only the tomograms listed by these indices '
+                           '(e.g., "1,2,4" or "5-10,15,16").'
+                      )
 
-    group = form.addGroup('Mask Generation')
-    group.addParam('density_percentage', IntParam,
-                   label='Density percentage',
-                   default=50,
-                   validators=[GT(0)],
-                   help='Percentage of voxels retained based on local density ranking; '
-                        'lower values create stricter masks (keep fewer voxels)'
-                   )
-    group.addParam('patch_size', IntParam,
-                   label='Patch size',
-                   default=4,
-                   validators=[GT(0)],
-                   help='Local patch size used for max/std local filters; '
-                        'larger values smooth detection of specimen regions; default works for typical pixel sizes'
-                   )
-    group.addParam('std_percentage', IntParam,
-                   label='Std percentage',
-                   default=50,
-                   validators=[GT(0)],
-                   help='Percentage retained based on local standard-deviation ranking; '
-                        'lower values emphasize textured regions'
-                   )
-    group.addParam('z_crop', FloatParam,
-                   label='Z crop',
-                   default=0.2,
-                   validators=[GT(0)],
-                   help='Fraction of tomogram Z to crop from both ends; '
-                        'masks out top and bottom 10% each when set to 0.2.'
-                        ' Use to avoid sampling low-quality reconstruction edges.'
-                   )
-
-
-# --------------------------- INSERT steps functions ----------------------
-def _insertAllSteps(self):
-    self._initialize()
-
-    self._insertFunctionStep(self.makeMaskStep, needsGPU=False)
-    self._insertFunctionStep(self.createOutputStep, needsGPU=False)
+        group = form.addGroup('Mask Generation')
+        group.addParam('density_percentage', IntParam,
+                       label='Density percentage',
+                       default=50,
+                       validators=[GT(0)],
+                       help='Percentage of voxels retained based on local density ranking; '
+                            'lower values create stricter masks (keep fewer voxels)'
+                       )
+        group.addParam('patch_size', IntParam,
+                       label='Patch size',
+                       default=4,
+                       validators=[GT(0)],
+                       help='Local patch size used for max/std local filters; '
+                            'larger values smooth detection of specimen regions; default works for typical pixel sizes'
+                       )
+        group.addParam('std_percentage', IntParam,
+                       label='Std percentage',
+                       default=50,
+                       validators=[GT(0)],
+                       help='Percentage retained based on local standard-deviation ranking; '
+                            'lower values emphasize textured regions'
+                       )
+        group.addParam('z_crop', FloatParam,
+                       label='Z crop',
+                       default=0.2,
+                       validators=[GT(0)],
+                       help='Fraction of tomogram Z to crop from both ends; '
+                            'masks out top and bottom 10% each when set to 0.2.'
+                            ' Use to avoid sampling low-quality reconstruction edges.'
+                       )
 
 
-# -------------------------- STEPS functions ------------------------------
-def _initialize(self):
-    self._copyStar(PREDICT_PROT)
+    # --------------------------- INSERT steps functions ----------------------
+    def _insertAllSteps(self):
+        self._initialize()
+
+        self._insertFunctionStep(self.makeMaskStep, needsGPU=False)
+        self._insertFunctionStep(self.createOutputStep, needsGPU=False)
 
 
-def makeMaskStep(self):
-    logger.info(cyanStr(f' Make Mask step...'))
-
-    try:
-        args = self._generateArguments()
-        Plugin.runIsonet2(self, args, useGpu=False)
-    except Exception as e:
-        logger.error(redStr(f'Make mask failed with the exception -> {e}'))
-        logger.error(traceback.format_exc())
+    # -------------------------- STEPS functions ------------------------------
+    def _initialize(self):
+        self._copyStar(PREDICT_PROT)
 
 
-def createOutputStep(self):
-    logger.info(cyanStr(f' Creating the masks...'))
+    def makeMaskStep(self):
+        logger.info(cyanStr(f' Make Mask step...'))
 
-    outTomoMasks = self._createOutputSet()
-    outTomoMasks.write()
-
-    # tomoStarFile = self._getTomosStarName()
-    # if not exists(tomoStarFile):
-    #     raise Exception(f'Tomo star file {tomoStarFile} was not generated.')
-    # self.setTomoSStarFile(tomoStarFile)
-
-    self._store()
-
-    self._defineOutputs(**{self._possibleOutputs.tomograms.name: outTomoMasks})
-    self._defineSourceRelation(self._getFormAttrib(PREDICT_PROT), outTomoMasks)
+        try:
+            args = self._generateArguments()
+            Plugin.runIsonet2(self, args, useGpu=False)
+        except Exception as e:
+            logger.error(redStr(f'Make mask failed with the exception -> {e}'))
+            logger.error(traceback.format_exc())
 
 
-def _generateArguments(self) -> str:
-    output_dir = self._getExtraPath()
-    starFile = self._newStarPath()
+    def createOutputStep(self):
+        logger.info(cyanStr(f' Creating the masks...'))
 
-    cmd = [
-        'make_mask',
-        f'--star_file {starFile}',
-        f'--output_dir {output_dir}',
-        f'--input_column rlnDenoisedTomoName',
-        f'--patch_size {self.patch_size.get()}',
-        f'--density_percentage {self.density_percentage.get()}',
-        f'--std_percentage {self.std_percentage.get()}',
-        f'--z_crop {self.z_crop.get()}',
-        f'--tomo_idx {self.tomo_idx.get()}'
+        outTomoMasks = self._createOutputSet()
+        outTomoMasks.write()
 
-    ]
-    return ' '.join(cmd)
+        # tomoStarFile = self._getTomosStarName()
+        # if not exists(tomoStarFile):
+        #     raise Exception(f'Tomo star file {tomoStarFile} was not generated.')
+        # self.setTomoSStarFile(tomoStarFile)
+
+        self._store()
+
+        self._defineOutputs(**{self._possibleOutputs.tomograms.name: outTomoMasks})
+        self._defineSourceRelation(self._getFormAttrib(PREDICT_PROT), outTomoMasks)
 
 
-def _createOutputSet(self) -> SetOfTomoMasks:
-    outTomoMasks = SetOfTomoMasks.create(self._getPath(), template='tomomasks%s.sqlite')
+    def _generateArguments(self) -> str:
+        output_dir = self._getExtraPath()
+        starFile = self._newStarPath()
 
-    tomoFiles = sorted(glob.glob(self._getExtraPath('*_mask.mrc')))
-    protPredict = self._getFormAttrib(PREDICT_PROT)
+        cmd = [
+            'make_mask',
+            f'--star_file {starFile}',
+            f'--output_dir {output_dir}',
+            f'--input_column rlnDenoisedTomoName',
+            f'--patch_size {self.patch_size.get()}',
+            f'--density_percentage {self.density_percentage.get()}',
+            f'--std_percentage {self.std_percentage.get()}',
+            f'--z_crop {self.z_crop.get()}',
+            f'--tomo_idx {self.tomo_idx.get()}'
 
-    tomoSetIn = protPredict.tomograms
-    outTomoMasks.copyInfo(tomoSetIn)
+        ]
+        return ' '.join(cmd)
 
-    for tomo in tomoSetIn:
-        tsId = tomo.getTsId()
-        for tomoFile in tomoFiles:
-            if f'_{tsId}_' in tomoFile:
-                mask = TomoMask()
-                mask.copyInfo(tomo)
-                mask.setFileName(tomoFile)
-                outTomoMasks.append(mask)
-                break
 
-    return outTomoMasks
+    def _createOutputSet(self) -> SetOfTomoMasks:
+        outTomoMasks = SetOfTomoMasks.create(self._getPath(), template='tomomasks%s.sqlite')
+
+        tomoFiles = sorted(glob.glob(self._getExtraPath('*_mask.mrc')))
+        protPredict = self._getFormAttrib(PREDICT_PROT)
+
+        tomoSetIn = protPredict.tomograms
+        outTomoMasks.copyInfo(tomoSetIn)
+
+        for tomo in tomoSetIn:
+            tsId = tomo.getTsId()
+            for tomoFile in tomoFiles:
+                if f'_{tsId}_' in tomoFile:
+                    mask = TomoMask()
+                    mask.copyInfo(tomo)
+                    mask.setFileName(tomoFile)
+                    outTomoMasks.append(mask)
+                    break
+
+        return outTomoMasks
