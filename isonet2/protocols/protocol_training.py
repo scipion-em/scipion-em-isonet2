@@ -94,16 +94,20 @@ class ProtIsonet2Training(ProtIsonet2Base):
                            '"network": Applies CTF-shaped filter to network input. '
                       )
         form.addParam('isCTFflipped', BooleanParam,
-                      label='Is the tomogram CTF flipped?',
+                      label='Is the input already phase-flipped?',
                       default=False,
                       condition='ctf_mode != 0',
-                      help='Whether input tomograms are phase flipped.'
+                      help='Check this ONLY if CTF phase correction has already been '
+                           'applied upstream. If disabled, the next option will appear to decide whether the phase-flip '
+                           'should be done here during training.'
                       )
         form.addParam('do_phaseflip_input', BooleanParam,
-                      label='Phase flip the input',
+                      label='Apply phase-flip during training?',
                       default=True,
                       condition='ctf_mode != 0 and not isCTFflipped',
-                      help='Whether to apply phase flip during training.'
+                      help='Only shown when the input is NOT already phase-flipped. '
+                            'If enabled, training corrects the CTF sign on the input '
+                            'volumes before feeding the network'
                       )
         form.addParam('clip_first_peak_mode', EnumParam,
                       label='Clip first peak mode',
