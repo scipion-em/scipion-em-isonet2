@@ -54,6 +54,7 @@ IN_TS_SET = 'inTsSet'
 TOMO_MASKS = 'tomoMasks'
 PREPARE_DATA_PROT = 'prepDataProt'
 PREDICT_PROT = 'predictProt'
+MAKE_MASK_PROT = 'makeMask'
 
 # CTF MODE
 CTF_NONE=0
