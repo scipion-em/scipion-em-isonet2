@@ -207,7 +207,7 @@ class ProtIsonet2PrepareData(ProtIsonet2Base):
 
     def _genZeroTiltDefocusList(self) -> List[float]:
         defocusList = []
-        for tsId, ts in self.tsDict.items():
+        for tsId, ts in sorted(self.tsDict.items()):
             ctf = self.ctfDict[tsId]
             defocusVal = self._getZeroTiltDefocus(ts, ctf)
             defocusList.append(defocusVal)
