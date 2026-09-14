@@ -102,7 +102,7 @@ class ProtIsonet2Training(ProtIsonet2Base):
         form.addParam('do_phaseflip_input', BooleanParam,
                       label='Phase flip the input',
                       default=True,
-                      condition='ctfMode != 0 and not isCTFflipped',
+                      condition='ctf_mode != 0 and not isCTFflipped',
                       help='Whether to apply phase flip during training.'
                       )
         form.addParam('clip_first_peak_mode', EnumParam,
