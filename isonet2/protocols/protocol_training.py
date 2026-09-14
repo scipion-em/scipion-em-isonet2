@@ -33,7 +33,7 @@ from typing import List
 
 from isonet2 import Plugin
 from isonet2.constants import PREPARE_DATA_PROT, CTF_NONE, UNET_MEDIUM, L2, ARCH_CHOICES, \
-    LOSS_FUNC_CHOICES, CTF_MODE_CHOICES, CFP_MODE_CONSTANT_CLIP
+    LOSS_FUNC_CHOICES, CTF_MODE_CHOICES, CFP_MODE_CONSTANT_CLIP, CTF_NETWORK, CTF_WIENER
 from isonet2.objects import Isonet2Model
 from isonet2.protocols.protocol_base import ProtIsonet2Base
 from pyworkflow import BETA
@@ -279,9 +279,6 @@ class ProtIsonet2Training(ProtIsonet2Base):
         arch = ARCH_CHOICES[self.arch.get()]
         return join(self._getExtraPath(), f'network_n2n_{arch}_{self.cube_size.get()}_full.pt')
 
-    def _getPretrainedModelPath(self, pretrained_model: Isonet2Model):
-        return pretrained_model.getPath()
-
     def _generateArguments(self) -> str:
         output_dir = self._getExtraPath()
         starFile = self._newStarPath()
@@ -312,16 +309,18 @@ class ProtIsonet2Training(ProtIsonet2Base):
 
 
 
-
         if not ctf_mode == CTF_NONE:
             cmd.append(f'--isCTFflipped {self.isCTFflipped.get()}')
             cmd.append(f'--do_phaseflip_input {self.do_phaseflip_input.get()}')
-            cmd.append(f'--clip_first_peak_mode {self.clip_first_peak_mode.get()}')
 
-            if self.ctf_deconvolution.get():
-                cmd.append(f'--snrfalloff {self.snr_falloff.get()}')
-                cmd.append(f'--deconvstrength {self.deconv_strength.get()}')
-                cmd.append(f'--highpassnyquist {self.highpass_nyquist.get()}')
+            if ctf_mode == CTF_NETWORK:
+                cmd.append(f'--clip_first_peak_mode {self.clip_first_peak_mode.get()}')
+
+            if ctf_mode == CTF_WIENER:
+                if self.ctf_deconvolution.get():
+                    cmd.append(f'--snrfalloff {self.snr_falloff.get()}')
+                    cmd.append(f'--deconvstrength {self.deconv_strength.get()}')
+                    cmd.append(f'--highpassnyquist {self.highpass_nyquist.get()}')
 
         if self.pretrained_choice:
             pretrainedPath = self._getPretrainedModelPath(pretrained_model)
@@ -354,6 +353,14 @@ class ProtIsonet2Training(ProtIsonet2Base):
 
         if not (0 <= highpass < 1):
             valmsg.append('Highpass Nyquist must be between 0 and 1.')
+
+        if self.ctf_mode.get() != CTF_NONE:
+            if not self.isCTFflipped.get() and not self.doPhaseflipInput.get():
+                valmsg.append(
+                    "CTF phase correction is fully disabled: 'already phase-flipped' "
+                    "is off and 'apply phase-flip during training' is also off. With "
+                    "CTF mode = None, the CTF sign will never be corrected."
+                        )
 
         return valmsg
 

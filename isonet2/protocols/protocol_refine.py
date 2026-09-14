@@ -26,8 +26,10 @@
 # **************************************************************************
 import logging
 from enum import Enum
+from typing import List
 
-from isonet2.constants import PREPARE_DATA_PROT, CTF_NONE, CFP_MODE_CONSTANT_CLIP, UNET_MEDIUM, MAKE_MASK_PROT
+from isonet2.constants import PREPARE_DATA_PROT, CTF_NONE, CFP_MODE_CONSTANT_CLIP, UNET_MEDIUM, MAKE_MASK_PROT, \
+    CTF_MODE_CHOICES, ARCH_CHOICES, LOSS_FUNC_CHOICES, CTF_NETWORK, CTF_WIENER
 from isonet2.objects import Isonet2Model
 from isonet2.protocols.protocol_base import ProtIsonet2Base
 from pyworkflow import BETA
@@ -41,6 +43,7 @@ logger = logging.getLogger(__name__)
 class Outputobjects(Enum):
     model = Isonet2Model
 
+
 class ProtIsonet2Refine(ProtIsonet2Base):
     """Use refine for IsoNet2 missing-wedge correction (isonet2) or isonet2-n2n combined modes."""
 
@@ -52,14 +55,13 @@ class ProtIsonet2Refine(ProtIsonet2Base):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-
     # --------------------------- DEFINE param functions ----------------------
     def _defineParams(self, form):
         form.addSection(label=Message.LABEL_INPUT)
         form.addParam(MAKE_MASK_PROT, PointerParam,
                       pointerClass='ProtIsonet2MakeMask',
                       important=True,
-                      label='Isonet2 Make Mask protocol')
+                      label='Isonet2 make mask protocol')
 
         form.addParam('pretrained_choice', BooleanParam,
                       label='Load pretrained model',
@@ -87,23 +89,27 @@ class ProtIsonet2Refine(ProtIsonet2Base):
                            '"network": Applies CTF-shaped filter to network input. '
                       )
         form.addParam('isCTFflipped', BooleanParam,
-                      label='Is the tomogram CTF flipped?',
+                      label='Is the input already phase-flipped?',
                       default=False,
                       condition='ctf_mode != 0',
-                      help='Whether input tomograms are phase flipped.'
+                      help='Check this ONLY if CTF phase correction has already been '
+                           'applied upstream. If disabled, the next option will appear to decide whether the phase-flip '
+                           'should be done here during training.'
                       )
         form.addParam('do_phaseflip_input', BooleanParam,
-                      label='Phase flip the input',
+                      label='Apply phase-flip during training?',
                       default=True,
-                      condition='ctf_mode != 0',
-                      help='Whether to apply phase flip during training.'
+                      condition='ctf_mode != 0 and not isCTFflipped',
+                      help='Only shown when the input is NOT already phase-flipped. '
+                           'If enabled, training corrects the CTF sign on the input '
+                           'volumes before feeding the network'
                       )
         form.addParam('clip_first_peak_mode', EnumParam,
                       label='Clip first peak mode',
                       choices=['none', 'constant clip', 'negative sine', 'cosine'],
                       default=CFP_MODE_CONSTANT_CLIP,
                       display=EnumParam.DISPLAY_HLIST,
-                      condition='ctf_mode != 0',
+                      condition='ctf_mode == 3',
                       help='Controls attenuation of overrepresented very-low-frequency CTF peak.'
                            'Options "negative sine" and "cosine" might increase low-resolution contrast.'
                       )
@@ -115,7 +121,7 @@ class ProtIsonet2Refine(ProtIsonet2Base):
                            'you can use a b-factor from 200–300. '
                       )
         group = form.addGroup('CTF Deconvolution',
-                              condition='ctf_mode != 0',
+                              condition='ctf_mode == 2',
                               expertLevel=LEVEL_ADVANCED
                               )
         group.addParam('ctf_deconvolution', BooleanParam,
@@ -230,4 +236,109 @@ class ProtIsonet2Refine(ProtIsonet2Base):
                        )
         form.addParallelSection(threads=8, mpi=0)
 
+    # --------------------------- INSERT steps functions ----------------------
+    def _insertAllSteps(self):
+        self._initialize()
+        self._insertFunctionStep(self.refineStep, needsGPU=True)
+        self._insertFunctionStep(self.createOutputStep, needsGPU=False)
 
+    # -------------------------- STEPS functions ------------------------------
+    def _initialize(self):
+        self._copyStar(MAKE_MASK_PROT)
+
+    def refineStep(self):
+        pass
+
+    def createOutputStep(self):
+        pass
+
+
+
+    def _generateArguments(self) -> str:
+        output_dir = self._getExtraPath()
+        starFile = self._newStarPath()
+        gpu = ','.join([str(el) for el in self.getGpuList()])
+        pretrained_model = self.pretrained_model.get()
+        ctf_mode = self.ctf_mode.get()
+
+
+        cmd = [
+            'denoise',
+            f'--star_file {starFile}',
+            f'--output_dir {output_dir}',
+            f'--gpuID "{gpu}"',
+            f'--cube_size {self.cube_size.get()}',
+            f'--epochs {self.epochs.get()}',
+            f'--batch_size {self.batch_size.get()}',
+            f'--save_interval {self.save_interval.get()}',
+            f'--learning_rate {self.learning_rate.get()}',
+            f'--CTF_mode {CTF_MODE_CHOICES[self.ctf_mode.get()]}',
+            f'--bfactor {self.b_factor.get()}',
+            f'--learning_rate_min {self.learning_rate_min.get()}',
+            f'--ncpus {self.numberOfThreads.get()}',
+            f'--mixed_precision {self.mixed_precision.get()}',
+            f'--arch {ARCH_CHOICES[self.arch.get()]}',
+            f'--loss_func {LOSS_FUNC_CHOICES[self.loss_func.get()]}',
+            f'--with_preview {self.with_preview.get()}'
+            f'--input_column rlnDenoisedTomoName'
+        ]
+
+        if not ctf_mode == CTF_NONE:
+            cmd.append(f'--isCTFflipped {self.isCTFflipped.get()}')
+            cmd.append(f'--do_phaseflip_input {self.do_phaseflip_input.get()}')
+
+            if ctf_mode == CTF_NETWORK:
+                cmd.append(f'--clip_first_peak_mode {self.clip_first_peak_mode.get()}')
+
+            if ctf_mode == CTF_WIENER:
+                if self.ctf_deconvolution.get():
+                    cmd.append(f'--snrfalloff {self.snr_falloff.get()}')
+                    cmd.append(f'--deconvstrength {self.deconv_strength.get()}')
+                    cmd.append(f'--highpassnyquist {self.highpass_nyquist.get()}')
+
+        if self.pretrained_choice:
+            pretrainedPath = self._getPretrainedModelPath(pretrained_model)
+            cmd.append(f'--pretrained_model {pretrainedPath}')
+
+        if self.with_preview.get():
+            cmd.append(f'--prev_tomo_idx {self.prev_tomo_idx.get()}')
+
+        return ' '.join(cmd)
+
+
+
+
+
+
+    # --------------------------- INFO functions ------------------------------
+
+    def _validate(self) -> List[str]:
+        valmsg = []
+        cube_size = self.cube_size.get()
+        lr = self.learning_rate.get()
+        lr_min = self.learning_rate_min.get()
+        save_interval = self.save_interval.get()
+        epochs = self.epochs.get()
+        highpass = self.highpass_nyquist.get()
+
+        if cube_size < 64 or cube_size % 16 != 0:
+            valmsg.append('Cube size must be higher than 64 and a multiple of 16.')
+
+        if lr_min > lr:
+            valmsg.append('Minimum learning rate must be lower than the initial learning rate.')
+
+        if save_interval > epochs:
+            valmsg.append('Save interval cannot be greater than the total number of epochs.')
+
+        if not (0 <= highpass < 1):
+            valmsg.append('Highpass Nyquist must be between 0 and 1.')
+
+        if self.ctf_mode.get() != CTF_NONE:
+            if not self.isCTFflipped.get() and not self.do_phaseflip_input.get():
+                valmsg.append(
+                    "CTF phase correction is fully disabled: 'already phase-flipped' "
+                    "is off and 'apply phase-flip during training' is also off. With "
+                    "CTF mode = None, the CTF sign will never be corrected."
+                )
+
+        return valmsg

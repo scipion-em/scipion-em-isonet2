@@ -85,7 +85,7 @@ class ProtIsonet2Predict(ProtIsonet2Base):
                       help='Build and apply a missing-wedge mask to cubic inputs before prediction.'
                       )
         form.addParam('isCTFflipped', BooleanParam,
-                      label='Is CTF flipped?',
+                      label='Is the input already phase-flipped?',
                       default=False,
                       help='Whether input tomograms are phase flipped.'
                            'Set to "Yes" if the input tomograms have been phase flipped.'

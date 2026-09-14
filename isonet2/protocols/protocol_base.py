@@ -27,6 +27,7 @@
 from typing import Union, Optional
 
 from isonet2.constants import PREPARE_DATA_PROT, TOMOGRAMS_STAR
+from isonet2.objects import Isonet2Model
 from pwem.protocols import EMProtocol
 from pyworkflow.object import Pointer, String
 from pyworkflow.utils import copyFile
@@ -67,4 +68,7 @@ class ProtIsonet2Base(EMProtocol):
 
     def setTomoSStarFile(self, val: str) -> None:
         self._tomoFile.set(val)
+
+    def _getPretrainedModelPath(self, pretrained_model: Isonet2Model):
+        return pretrained_model.getPath()
 
