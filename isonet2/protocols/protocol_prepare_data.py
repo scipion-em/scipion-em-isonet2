@@ -36,7 +36,7 @@ from pyworkflow import BETA
 from pyworkflow.object import String
 from pyworkflow.protocol import PointerParam
 from pyworkflow.utils import Message, cyanStr, yellowStr, makePath, redStr
-from tomo.objects import TiltSeries, CTFTomoSeries, SetOfTomoMasks, TomoAcquisition
+from tomo.objects import TiltSeries, CTFTomoSeries, SetOfTomoMasks, TomoAcquisition, TiltImage
 from tomo.utils import getTsIdsIntersection, getTsIdsDicts, check_sr_and_size, convertOrLink
 
 logger = logging.getLogger(__name__)
@@ -215,28 +215,32 @@ class ProtIsonet2PrepareData(ProtIsonet2Base):
         return defocusList
 
     @staticmethod
-    def _getZeroTiltDefocus(ts: TiltSeries, ctf: CTFTomoSeries) -> Optional[float]:
-        tiList = sorted([ti.clone() for ti in ts.iterItems()], key=lambda ti: ti.getTsId())
-        ctfList = sorted([ctfTomo.clone() for ctfTomo in ctf.iterItems()],key=lambda ti: ti.getTsId())
+    def _getZeroTiltDefocus(ts: TiltSeries, ctf: CTFTomoSeries) -> float:
+        tiltAnglesSorted = []
+        acqOrdersSorted = []
+        for ti in ts.iterItems(orderBy=TiltImage.TILT_ANGLE_FIELD):
+            tiltAnglesSorted.append(abs(ti.getTiltAngle()))
+            acqOrdersSorted.append(ti.getAcquisitionOrder())
 
-        # Find the tilt-image with the tilt angle closest to 0.
-        tiZeroTilt = min(tiList, key=lambda ti: abs(ti.getTiltAngle()))
-        tiZeroTiltAcqOrder = tiZeroTilt.getAcquisitionOrder()
+        minTiltAngle = min(tiltAnglesSorted)
+        # Index of the zero tilt-angle
+        minTiltAngleIndex = tiltAnglesSorted.index(minTiltAngle)
+        # Acq order index in tilt-image list that corresponds to the zero tilt angle
+        zeroTiltAcqOrder = acqOrdersSorted[minTiltAngleIndex]
 
-        # Find the corresponding CTF. next() will stop evaluating
-        # as soon as it finds the first match
-        matchingCtf = None
-        for ctfTomo in ctfList:
-            if ctfTomo.getAcquisitionOrder() == tiZeroTiltAcqOrder:
-                matchingCtf = ctfTomo
-                break
+        acqOrders = []
+        ctfMeanDefocus = []
+        for ctfTomo in ctf.iterItems():
+            acqOrders.append(ctfTomo.getAcquisitionOrder())
+            ctfMeanDefocus.append((ctfTomo.getDefocusU() + ctfTomo.getDefocusV()) / 2)
 
-        # Return the defocus if a match was found.
-        if matchingCtf:
-            meanDefocus = (matchingCtf.getDefocusU() + matchingCtf.getDefocusV()) / 2
-            return meanDefocus
-        else:
-            return None
+        # Acq order index in ctfTomo list that corresponds to the zero tilt
+        ctfZeroTiltAcqOrderIndex = acqOrders.index(zeroTiltAcqOrder)
+        # Mean defocus of the ctfTomo that corresponds to the zero tilt-angle (via common field acqOrder
+        # between tilt-images and ctfTomos)
+        zeroTiltDefocus = ctfMeanDefocus[ctfZeroTiltAcqOrderIndex]
+        return zeroTiltDefocus
+
 
     def _getConvertedOrLinkedNameOdd(self, tsId: str) -> str:
         return join(self._getOddDir(), f'{tsId}{ODD_SUFFIX}{MRC_EXT}')
