@@ -52,7 +52,7 @@ class ProtIsonet2Training(ProtIsonet2Base):
     """Denoise for quicker noise-to-noise (n2n) training workflows for preliminary
     tomogram testing and mask generation."""
 
-    _label = 'Training (denoising)'
+    _label = 'Training'
     _devStatus = BETA
 
     # _possibleOutputs = Outputobjects
@@ -355,7 +355,7 @@ class ProtIsonet2Training(ProtIsonet2Base):
             valmsg.append('Highpass Nyquist must be between 0 and 1.')
 
         if self.ctf_mode.get() != CTF_NONE:
-            if not self.isCTFflipped.get() and not self.doPhaseflipInput.get():
+            if not self.isCTFflipped.get() and not self.do_phaseflip_input.get():
                 valmsg.append(
                     "CTF phase correction is fully disabled: 'already phase-flipped' "
                     "is off and 'apply phase-flip during training' is also off. With "
