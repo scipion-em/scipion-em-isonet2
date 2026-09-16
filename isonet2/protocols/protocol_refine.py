@@ -222,6 +222,7 @@ class ProtIsonet2Refine(ProtIsonet2Base):
                       label='Noise level',
                       default=0,
                       validators=[GT(0)],
+                      expertLevel=LEVEL_ADVANCED,
                       help='Adds artificial noise during training.'
                       )
         form.addParam('random_rot_weight', FloatParam,

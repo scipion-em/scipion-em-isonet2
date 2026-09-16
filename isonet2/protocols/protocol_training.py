@@ -33,7 +33,7 @@ from typing import List
 
 from isonet2 import Plugin
 from isonet2.constants import PREPARE_DATA_PROT, CTF_NONE, UNET_MEDIUM, L2, ARCH_CHOICES, \
-    LOSS_FUNC_CHOICES, CTF_MODE_CHOICES, CFP_MODE_CONSTANT_CLIP, CTF_NETWORK, CTF_WIENER
+    LOSS_FUNC_CHOICES, CTF_MODE_CHOICES, CFP_MODE_CONSTANT_CLIP, CTF_NETWORK, CTF_WIENER, BATCH_AUTO
 from isonet2.objects import Isonet2Model
 from isonet2.protocols.protocol_base import ProtIsonet2Base
 from pyworkflow import BETA
@@ -96,7 +96,7 @@ class ProtIsonet2Training(ProtIsonet2Base):
         form.addParam('isCTFflipped', BooleanParam,
                       label='Is the input already phase-flipped?',
                       default=False,
-                      condition='ctf_mode != 0',
+                      condition=f'ctf_mode != {CTF_NONE}',
                       help='Check this ONLY if CTF phase correction has already been '
                            'applied upstream. If disabled, the next option will appear to decide whether the phase-flip '
                            'should be done here during training.'
@@ -104,7 +104,7 @@ class ProtIsonet2Training(ProtIsonet2Base):
         form.addParam('do_phaseflip_input', BooleanParam,
                       label='Apply phase-flip during training?',
                       default=True,
-                      condition='ctf_mode != 0 and not isCTFflipped',
+                      condition=f'ctf_mode != {CTF_NONE} and not isCTFflipped',
                       help='Only shown when the input is NOT already phase-flipped. '
                             'If enabled, training corrects the CTF sign on the input '
                             'volumes before feeding the network'
@@ -114,7 +114,7 @@ class ProtIsonet2Training(ProtIsonet2Base):
                       choices=['none', 'constant clip', 'negative sine', 'cosine'],
                       default=CFP_MODE_CONSTANT_CLIP,
                       display=EnumParam.DISPLAY_HLIST,
-                      condition='ctf_mode == 3',
+                      condition=f'ctf_mode == {CTF_NETWORK}',
                       help='Controls attenuation of overrepresented very-low-frequency CTF peak.'
                            'Options "negative sine" and "cosine" might increase low-resolution contrast.'
                       )
@@ -126,7 +126,7 @@ class ProtIsonet2Training(ProtIsonet2Base):
                            'you can use a b-factor from 200–300. '
                       )
         group = form.addGroup('CTF Deconvolution',
-                              condition='ctf_mode == 2',
+                              condition=f'ctf_mode == {CTF_WIENER}',
                               expertLevel=LEVEL_ADVANCED
                               )
         group.addParam('ctf_deconvolution', BooleanParam,
@@ -167,13 +167,20 @@ class ProtIsonet2Training(ProtIsonet2Base):
                       help='Network architecture (e.g., unet-small, unet-medium, unet-large). '
                            'Determines model capacity and VRAM requirements.'
                       )
+        form.addParam('batch_mode', EnumParam,
+                      label='Batch size selection',
+                      choices=['auto','manual'],
+                      default=BATCH_AUTO,
+                      help='Number of subtomograms per optimization step; if "auto", this is automatically determined '
+                           'by multiplying the number of available GPUs by 2.'  
+                           'If the number of GPUs is 1, batch size is 4. Batch size per GPU matters for gradient stability.'
+                      )
         form.addParam('batch_size', StringParam,
                       label='Batch size',
-                      default='auto',
-                      help='Number of subtomograms per optimization step; if "auto", this is automatically determined '
-                           'by multiplying the number of available GPUs by 2. If the number of GPUs is 1, '
-                           'batch size is 4. Batch size per GPU matters for gradient stability.'
+                      condition=f'batch_mode != {BATCH_AUTO}',
+                      allowsNull=False
                       )
+
         form.addParam('cube_size', IntParam,
                       label='Cube size',
                       default=96,
@@ -294,7 +301,6 @@ class ProtIsonet2Training(ProtIsonet2Base):
             f'--gpuID "[{gpu}]"',
             f'--cube_size {self.cube_size.get()}',
             f'--epochs {self.epochs.get()}',
-            f'--batch_size {self.batch_size.get()}',
             f'--save_interval {self.save_interval.get()}',
             f'--learning_rate {self.learning_rate.get()}',
             f'--CTF_mode {CTF_MODE_CHOICES[self.ctf_mode.get()]}',
@@ -307,7 +313,10 @@ class ProtIsonet2Training(ProtIsonet2Base):
             f'--with_preview {self.with_preview.get()}'
         ]
 
-
+        if self.batch_mode.get() == BATCH_AUTO:
+            cmd.append(f'--batch_size auto ')
+        else:
+            cmd.append(f'--batch_size {self.batch_size.get()}')
 
         if not ctf_mode == CTF_NONE:
             cmd.append(f'--isCTFflipped {self.isCTFflipped.get()}')
@@ -361,6 +370,7 @@ class ProtIsonet2Training(ProtIsonet2Base):
                     "is off and 'apply phase-flip during training' is also off. With "
                     "CTF mode = None, the CTF sign will never be corrected."
                         )
+
 
         return valmsg
 
