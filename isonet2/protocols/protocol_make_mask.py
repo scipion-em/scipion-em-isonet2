@@ -49,7 +49,7 @@ class ProtIsonet2MakeMask(ProtIsonet2Base):
     """Generate masks to prioritize regions of interest.
     Masks improve sampling efficiency and training stability."""
 
-    _label = 'Isonet2 make mask'
+    _label = 'Make mask'
     _devStatus = BETA
 
     _possibleOutputs = Outputobjects

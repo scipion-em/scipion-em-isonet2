@@ -54,7 +54,7 @@ class ProtIsonet2Predict(ProtIsonet2Base):
     """Apply a trained IsoNet model to tomograms to produce denoised or missing-wedge–corrected volumes.
     Prediction utilizes the model's saved cube size and CTF handling options, but allows for runtime adjustments."""
 
-    _label = 'predict'
+    _label = 'Predict'
     _devStatus = BETA
     _possibleOutputs = Outputobjects
 

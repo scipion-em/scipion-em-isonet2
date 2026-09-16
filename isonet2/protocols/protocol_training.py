@@ -52,7 +52,7 @@ class ProtIsonet2Training(ProtIsonet2Base):
     """Denoise for quicker noise-to-noise (n2n) training workflows for preliminary
     tomogram testing and mask generation."""
 
-    _label = 'Isonet2 training (denoising)'
+    _label = 'Training (denoising)'
     _devStatus = BETA
 
     # _possibleOutputs = Outputobjects

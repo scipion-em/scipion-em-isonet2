@@ -49,7 +49,7 @@ class Outputobjects(Enum):
 class ProtIsonet2Refine(ProtIsonet2Base):
     """Use refine for IsoNet2 missing-wedge correction (isonet2) or isonet2-n2n combined modes."""
 
-    _label = 'Isonet2 refine'
+    _label = 'Refine'
     _devStatus = BETA
 
     # _possibleOutputs = Outputobjects
