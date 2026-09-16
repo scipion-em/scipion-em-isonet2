@@ -173,12 +173,14 @@ class ProtIsonet2Training(ProtIsonet2Base):
                       default=BATCH_AUTO,
                       help='Number of subtomograms per optimization step; if "auto", this is automatically determined '
                            'by multiplying the number of available GPUs by 2.'  
-                           'If the number of GPUs is 1, batch size is 4. Batch size per GPU matters for gradient stability.'
+                           'If the number of GPUs is 1, batch size is 4. '
+                           'If "manual", set the value yourself.'
                       )
         form.addParam('batch_size', StringParam,
                       label='Batch size',
                       condition=f'batch_mode != {BATCH_AUTO}',
-                      allowsNull=False
+                      allowsNull=False,
+                      help='Total subtomograms per optimization step, across all GPUs.'
                       )
 
         form.addParam('cube_size', IntParam,
