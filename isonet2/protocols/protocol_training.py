@@ -291,7 +291,7 @@ class ProtIsonet2Training(ProtIsonet2Base):
             'denoise',
             f'--star_file {starFile}',
             f'--output_dir {output_dir}',
-            f'--gpuID "{gpu}"',
+            f'--gpuID "[{gpu}]"',
             f'--cube_size {self.cube_size.get()}',
             f'--epochs {self.epochs.get()}',
             f'--batch_size {self.batch_size.get()}',
