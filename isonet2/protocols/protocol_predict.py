@@ -173,7 +173,7 @@ class ProtIsonet2Predict(ProtIsonet2Base):
             f'--star_file {starFile}',
             f'--model {modelPath}',
             f'--output_dir {output_dir}',
-            f'--gpuID {gpu}',
+            f'--gpuID [{gpu}]',
             f'--padding_factor {self.padding_factor.get()}',
             f'--tomo_idx {self.tomo_idx.get()}'
         ]
