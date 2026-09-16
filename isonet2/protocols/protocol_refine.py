@@ -25,17 +25,19 @@
 # *
 # **************************************************************************
 import logging
+import traceback
 from enum import Enum
 from typing import List
 
+from isonet2 import Plugin
 from isonet2.constants import PREPARE_DATA_PROT, CTF_NONE, CFP_MODE_CONSTANT_CLIP, UNET_MEDIUM, MAKE_MASK_PROT, \
-    CTF_MODE_CHOICES, ARCH_CHOICES, LOSS_FUNC_CHOICES, CTF_NETWORK, CTF_WIENER
+    CTF_MODE_CHOICES, ARCH_CHOICES, LOSS_FUNC_CHOICES, CTF_NETWORK, CTF_WIENER, L2
 from isonet2.objects import Isonet2Model
 from isonet2.protocols.protocol_base import ProtIsonet2Base
 from pyworkflow import BETA
 from pyworkflow.protocol import PointerParam, BooleanParam, EnumParam, FloatParam, LEVEL_ADVANCED, GE, GT, StringParam, \
     IntParam, GPU_LIST
-from pyworkflow.utils import Message
+from pyworkflow.utils import Message, cyanStr, redStr
 
 logger = logging.getLogger(__name__)
 
@@ -66,7 +68,7 @@ class ProtIsonet2Refine(ProtIsonet2Base):
         form.addParam('pretrained_choice', BooleanParam,
                       label='Load pretrained model',
                       default=False,
-                      help='Pretrained model to continue training. Previous method, architecture, cube_size, '
+                      help='Pretrained model to perform refinement. Previous method, architecture, cube_size, '
                            'ctf_mode, and metrics will be loaded.'
                       )
         form.addParam('pretrained_model', PointerParam,
@@ -247,12 +249,19 @@ class ProtIsonet2Refine(ProtIsonet2Base):
         self._copyStar(MAKE_MASK_PROT)
 
     def refineStep(self):
-        pass
+        logger.info(cyanStr(f' Refine step...'))
+
+        try:
+            args = self._generateArguments()
+            Plugin.runIsonet2(self, args, useGpu=True)
+        except Exception as e:
+            logger.error(redStr(f'Refine failed with the exception -> {e}'))
+            logger.error(traceback.format_exc())
 
     def createOutputStep(self):
         pass
 
-
+    # -------------------------- UTILS functions ------------------------------
 
     def _generateArguments(self) -> str:
         output_dir = self._getExtraPath()
@@ -280,7 +289,8 @@ class ProtIsonet2Refine(ProtIsonet2Base):
             f'--arch {ARCH_CHOICES[self.arch.get()]}',
             f'--loss_func {LOSS_FUNC_CHOICES[self.loss_func.get()]}',
             f'--with_preview {self.with_preview.get()}'
-            f'--input_column rlnDenoisedTomoName'
+            f'--input_column rlnDenoisedTomoName',
+            f'--method isonet2'
         ]
 
         if not ctf_mode == CTF_NONE:

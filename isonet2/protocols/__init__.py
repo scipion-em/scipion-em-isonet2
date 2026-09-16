@@ -27,5 +27,6 @@
 from isonet2.protocols.protocol_make_mask import ProtIsonet2MakeMask
 from isonet2.protocols.protocol_predict import ProtIsonet2Predict
 from isonet2.protocols.protocol_prepare_data import ProtIsonet2PrepareData
+from isonet2.protocols.protocol_refine import ProtIsonet2Refine
 from isonet2.protocols.protocol_training import ProtIsonet2Training
 
