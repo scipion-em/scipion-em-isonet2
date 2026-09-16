@@ -24,6 +24,7 @@
 # *  e-mail address 'scipion@cnb.csic.es'
 # *
 # **************************************************************************
+import glob
 import logging
 import traceback
 from enum import Enum
@@ -31,7 +32,7 @@ from typing import List
 
 from isonet2 import Plugin
 from isonet2.constants import PREPARE_DATA_PROT, CTF_NONE, CFP_MODE_CONSTANT_CLIP, UNET_MEDIUM, MAKE_MASK_PROT, \
-    CTF_MODE_CHOICES, ARCH_CHOICES, LOSS_FUNC_CHOICES, CTF_NETWORK, CTF_WIENER, L2
+    CTF_MODE_CHOICES, ARCH_CHOICES, LOSS_FUNC_CHOICES, CTF_NETWORK, CTF_WIENER, L2, NOISE_MODE_NONE
 from isonet2.objects import Isonet2Model
 from isonet2.protocols.protocol_base import ProtIsonet2Base
 from pyworkflow import BETA
@@ -210,6 +211,25 @@ class ProtIsonet2Refine(ProtIsonet2Base):
                       expertLevel=LEVEL_ADVANCED,
                       help='If set to "Yes", float16/mixed precision to reduce VRAM and speed up training is used.'
                       )
+        form.addParam('noise_mode', EnumParam,
+                      label='Noise mode',
+                      choices=['nofilter','ramp','hamming'],
+                      default=NOISE_MODE_NONE,
+                      expertLevel=LEVEL_ADVANCED,
+                      help='Controls filter applied when generating synthetic noise (None, ramp, hamming).'
+                      )
+        form.addParam('noise_level', IntParam,
+                      label='Noise level',
+                      default=0,
+                      validators=[GT(0)],
+                      help='Adds artificial noise during training.'
+                      )
+        form.addParam('random_rot_weight', FloatParam,
+                      label='Random rotation weight',
+                      default=0.2,
+                      expertLevel=LEVEL_ADVANCED,
+                      help='Percentage of rotations applied as random augmentation.'
+                      )
 
         group = form.addGroup('Checkpoints & preview')
         group.addParam('save_interval', IntParam,
@@ -259,7 +279,13 @@ class ProtIsonet2Refine(ProtIsonet2Base):
             logger.error(traceback.format_exc())
 
     def createOutputStep(self):
-        pass
+        # modelFiles = sorted(glob.glob(self._getExtraPath('*_full.pt')), reverse=True)
+        # for modelFile in modelFiles:
+        #     model = Isonet2Model(model_file=modelFile)
+        #     modelEpoch = removeBaseExt(modelFile).replace(
+        #         f'network_n2n_{ARCH_CHOICES[self.arch.get()]}_{self.cube_size.get()}_', '')
+        #     self._defineOutputs(**{Outputobjects.model.name + f'_{modelEpoch}': model})
+
 
     # -------------------------- UTILS functions ------------------------------
 
@@ -272,7 +298,7 @@ class ProtIsonet2Refine(ProtIsonet2Base):
 
 
         cmd = [
-            'denoise',
+            'refine',
             f'--star_file {starFile}',
             f'--output_dir {output_dir}',
             f'--gpuID [{gpu}]',
@@ -288,9 +314,12 @@ class ProtIsonet2Refine(ProtIsonet2Base):
             f'--mixed_precision {self.mixed_precision.get()}',
             f'--arch {ARCH_CHOICES[self.arch.get()]}',
             f'--loss_func {LOSS_FUNC_CHOICES[self.loss_func.get()]}',
-            f'--with_preview {self.with_preview.get()}'
+            f'--with_preview {self.with_preview.get()}',
             f'--input_column rlnDenoisedTomoName',
-            f'--method isonet2'
+            f'--method isonet2',
+            f'--noise_level {self.noise_level.get()}',
+            f'--noise_mode {self.noise_mode.get()}',
+            f'--random_rot_weight {self.random_rot_weight.get()}'
         ]
 
         if not ctf_mode == CTF_NONE:

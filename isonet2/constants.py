@@ -82,6 +82,6 @@ CTF_MODE_CHOICES = ['None', 'phase_only', 'wiener', 'network']
 ARCH_CHOICES = ['unet-small', 'unet-medium', 'unet-large']
 LOSS_FUNC_CHOICES = ['L1', 'Huber', 'L2']
 
-# Advanced default
-LR_MIN_DEFAULT = 3e-4
-NCPUS_DEFAULT = 16
+NOISE_MODE_NONE = 0
+NOISE_MODE_RAMP = 1
+NOISE_MODE_HAMMING = 2
