@@ -221,7 +221,7 @@ class ProtIsonet2Refine(ProtIsonet2Base):
         form.addParam('noise_level', IntParam,
                       label='Noise level',
                       default=0,
-                      validators=[GT(0)],
+                      validators=[GE(0)],
                       expertLevel=LEVEL_ADVANCED,
                       help='Adds artificial noise during training.'
                       )
