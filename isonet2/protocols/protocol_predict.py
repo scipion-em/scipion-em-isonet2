@@ -62,7 +62,6 @@ class ProtIsonet2Predict(ProtIsonet2Base):
         super().__init__(**kwargs)
 
         self.failedTsIds = []
-        self._tomoFile = String()
 
     # --------------------------- DEFINE param functions ----------------------
     def _defineParams(self, form):

@@ -136,10 +136,8 @@ class ProtIsonet2MakeMask(ProtIsonet2Base):
         outTomoMasks = self._createOutputSet()
         outTomoMasks.write()
 
-        # tomoStarFile = self._getTomosStarName()
-        # if not exists(tomoStarFile):
-        #     raise Exception(f'Tomo star file {tomoStarFile} was not generated.')
-        # self.setTomoSStarFile(tomoStarFile)
+        tomoStarFile = self._getTomosStarName()
+        self.setTomoSStarFile(tomoStarFile)
 
         self._store()
 
