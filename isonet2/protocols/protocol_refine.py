@@ -285,7 +285,7 @@ class ProtIsonet2Refine(ProtIsonet2Base):
             model = Isonet2Model(model_file=modelFile)
             modelEpoch = removeBaseExt(modelFile).replace(f'network_isonet2_{ARCH_CHOICES[self.arch.get()]}_{self.cube_size.get()}_', '')
             self._defineOutputs(**{Outputobjects.model.name + f'_{modelEpoch}': model})
-
+            #self._defineSourceRelation(self._getFormAttrib(MAKE_MASK_PROT), model)
 
     # -------------------------- UTILS functions ------------------------------
 
