@@ -292,7 +292,7 @@ class ProtIsonet2Refine(ProtIsonet2Base):
 
     def _generateArguments(self) -> str:
         output_dir = self._getExtraPath()
-        starFile = self._newStarPath()
+        starFile = self._getExtraPath()
         gpu = ','.join([str(el) for el in self.getGpuList()])
         pretrained_model = self.pretrained_model.get()
         ctf_mode = self.ctf_mode.get()
