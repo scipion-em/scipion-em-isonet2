@@ -163,7 +163,7 @@ class ProtIsonet2MakeMask(ProtIsonet2Base):
         ]
 
         if self.tomo_idx.get() == 'All':
-            cmd.append('--f tomo_idx None')
+            cmd.append(f'--tomo_idx None')
         else:
             cmd.append(f'--tomo_idx {self.tomo_idx.get()}')
 
