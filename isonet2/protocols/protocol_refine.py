@@ -38,7 +38,7 @@ from isonet2.protocols.protocol_base import ProtIsonet2Base
 from pyworkflow import BETA
 from pyworkflow.protocol import PointerParam, BooleanParam, EnumParam, FloatParam, LEVEL_ADVANCED, GE, GT, StringParam, \
     IntParam, GPU_LIST
-from pyworkflow.utils import Message, cyanStr, redStr
+from pyworkflow.utils import Message, cyanStr, redStr, removeBaseExt
 
 logger = logging.getLogger(__name__)
 
@@ -280,13 +280,12 @@ class ProtIsonet2Refine(ProtIsonet2Base):
             logger.error(traceback.format_exc())
 
     def createOutputStep(self):
-        # modelFiles = sorted(glob.glob(self._getExtraPath('*_full.pt')), reverse=True)
-        # for modelFile in modelFiles:
-        #     model = Isonet2Model(model_file=modelFile)
-        #     modelEpoch = removeBaseExt(modelFile).replace(
-        #         f'network_n2n_{ARCH_CHOICES[self.arch.get()]}_{self.cube_size.get()}_', '')
-        #     self._defineOutputs(**{Outputobjects.model.name + f'_{modelEpoch}': model})
-            pass
+        modelFiles = sorted(glob.glob(self._getExtraPath('*_full.pt')), reverse=True)
+        for modelFile in modelFiles:
+            model = Isonet2Model(model_file=modelFile)
+            modelEpoch = removeBaseExt(modelFile).replace(f'network_isonet2_{ARCH_CHOICES[self.arch.get()]}_{self.cube_size.get()}_', '')
+            self._defineOutputs(**{Outputobjects.model.name + f'_{modelEpoch}': model})
+
 
     # -------------------------- UTILS functions ------------------------------
 
