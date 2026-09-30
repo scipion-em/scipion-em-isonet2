@@ -76,16 +76,16 @@ class ProtIsonet2Predict(ProtIsonet2Base):
                            '(training) protocol or a Refine '
                            'protocol. This determines which models are listed below.')
 
-        form.addParam('trainingModel', PointerParam,
-                      pointerClass='ProtIsonet2Training',
+        form.addParam('trainingProt', PointerParam,
+                      pointerClass='Isonet2Model',
                       condition=f'sourceProtocolType == {PROT_TRAINING}',
-                      label='Denoise model',
+                      label='Denoise data',
                       help='Trained n2n model to use for prediction.')
 
         form.addParam('refineModel', PointerParam,
-                      pointerClass='ProtIsonet2Refine',
+                      pointerClass='Isonet2Model',
                       condition=f'sourceProtocolType == {PROT_REFINE}' ,
-                      label='Refine model',
+                      label='Refine data',
                       help='Trained isonet2 model to use for prediction.')
 
 
