@@ -191,7 +191,7 @@ class ProtIsonet2Predict(ProtIsonet2Base):
             f'--tomo_idx {self.tomo_idx.get()}'
         ]
 
-        if self.
+        #if self.
 
         if self.missingWedge_mask.get():
             cmd.append('--apply_mw_x1')
