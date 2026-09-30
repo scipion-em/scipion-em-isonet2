@@ -274,12 +274,16 @@ class ProtIsonet2Training(ProtIsonet2Base):
             logger.error(traceback.format_exc())
 
     def createOutputStep(self):
+        tomoStarFile = self._getTomosStarName()
+        self.setTomoSStarFile(tomoStarFile)
+
         modelFiles = sorted(glob.glob(self._getExtraPath('*_full.pt')), reverse=True)
         for modelFile in modelFiles:
             model = Isonet2Model(model_file=modelFile)
             modelEpoch = removeBaseExt(modelFile).replace(f'network_n2n_{ARCH_CHOICES[self.arch.get()]}_{self.cube_size.get()}_','')
             self._defineOutputs(**{Outputobjects.model.name + f'_{modelEpoch}': model})
 
+        self._store()
 
 
     # -------------------------- UTILS functions ------------------------------
