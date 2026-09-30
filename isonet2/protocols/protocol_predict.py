@@ -35,7 +35,7 @@ from xml.sax.handler import property_interning_dict
 from xmipp3.protocols.protocol_align_volume_and_particles import pointerClasses
 
 from isonet2 import Plugin
-from isonet2.constants import PREPARE_DATA_PROT, TOMOGRAMS_STAR, TRAINING_PROT, PROT_TRAINING, PROT_REFINE, REFINE_PROT
+from isonet2.constants import PREPARE_DATA_PROT, TOMOGRAMS_STAR
 from isonet2.objects import Isonet2Model
 from isonet2.protocols.protocol_base import ProtIsonet2Base
 from pyworkflow import BETA, join

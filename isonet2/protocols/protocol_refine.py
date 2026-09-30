@@ -32,7 +32,7 @@ from typing import List
 
 from isonet2 import Plugin
 from isonet2.constants import PREPARE_DATA_PROT, CTF_NONE, CFP_MODE_CONSTANT_CLIP, UNET_MEDIUM, MAKE_MASK_PROT, \
-    CTF_MODE_CHOICES, ARCH_CHOICES, LOSS_FUNC_CHOICES, CTF_NETWORK, CTF_WIENER, L2, NOISE_MODE_NONE
+    CTF_MODE_CHOICES, ARCH_CHOICES, LOSS_FUNC_CHOICES, CTF_NETWORK, CTF_WIENER, L2, NOISE_MODE_NONE, BATCH_AUTO
 from isonet2.objects import Isonet2Model
 from isonet2.protocols.protocol_base import ProtIsonet2Base
 from pyworkflow import BETA
@@ -165,12 +165,20 @@ class ProtIsonet2Refine(ProtIsonet2Base):
                       help='Network architecture (e.g., unet-small, unet-medium, unet-large). '
                            'Determines model capacity and VRAM requirements.'
                       )
+        form.addParam('batch_mode', EnumParam,
+                      label='Batch size selection',
+                      choices=['auto', 'manual'],
+                      default=BATCH_AUTO,
+                      help='Number of subtomograms per optimization step; if "auto", this is automatically determined '
+                           'by multiplying the number of available GPUs by 2.'
+                           'If the number of GPUs is 1, batch size is 4. '
+                           'If "manual", set the value yourself.'
+                      )
         form.addParam('batch_size', StringParam,
                       label='Batch size',
-                      default='auto',
-                      help='Number of subtomograms per optimization step; if "auto", this is automatically determined '
-                           'by multiplying the number of available GPUs by 2. If the number of GPUs is 1, '
-                           'batch size is 4. Batch size per GPU matters for gradient stability.'
+                      condition=f'batch_mode != {BATCH_AUTO}',
+                      allowsNull=False,
+                      help='Total subtomograms per optimization step, across all GPUs.'
                       )
         form.addParam('cube_size', IntParam,
                       label='Cube size',

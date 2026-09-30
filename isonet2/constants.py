@@ -58,8 +58,6 @@ MAKE_MASK_PROT = 'makeMaskProt'
 TRAINING_PROT = 'trainingProt'
 REFINE_PROT = 'refineProt'
 
-PROT_TRAINING = 0
-PROT_REFINE = 1
 
 # CTF MODE
 CTF_NONE=0
