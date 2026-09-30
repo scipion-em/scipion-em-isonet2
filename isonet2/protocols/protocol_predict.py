@@ -30,9 +30,12 @@ import traceback
 from enum import Enum
 from os.path import abspath, exists
 from typing import List
+from xml.sax.handler import property_interning_dict
+
+from xmipp3.protocols.protocol_align_volume_and_particles import pointerClasses
 
 from isonet2 import Plugin
-from isonet2.constants import PREPARE_DATA_PROT, TOMOGRAMS_STAR, TRAINING_PROT, PROT_TRAINING, PROT_REFINE
+from isonet2.constants import PREPARE_DATA_PROT, TOMOGRAMS_STAR, TRAINING_PROT, PROT_TRAINING, PROT_REFINE, REFINE_PROT
 from isonet2.objects import Isonet2Model
 from isonet2.protocols.protocol_base import ProtIsonet2Base
 from pyworkflow import BETA, join
@@ -76,16 +79,26 @@ class ProtIsonet2Predict(ProtIsonet2Base):
                            '(training) protocol or a Refine '
                            'protocol. This determines which models are listed below.')
 
-        form.addParam('trainingProt', PointerParam,
+        form.addParam(TRAINING_PROT,PointerParam,
+                      pointerClass='ProtIsonet2Training',
+                      condition=f'sourceProtocolType == {PROT_TRAINING}',
+                      label='Denoise data'
+                      )
+        form.addParam('trainingModel', PointerParam,
                       pointerClass='Isonet2Model',
                       condition=f'sourceProtocolType == {PROT_TRAINING}',
-                      label='Denoise data',
+                      label='Denoise model',
                       help='Trained n2n model to use for prediction.')
 
+        form.addParam(REFINE_PROT, PointerParam,
+                     pointerClass='ProtIsonet2Refine',
+                     condition=f'sourceProtocolType == {PROT_REFINE}',
+                     label='Refine data'
+                     )
         form.addParam('refineModel', PointerParam,
                       pointerClass='Isonet2Model',
                       condition=f'sourceProtocolType == {PROT_REFINE}' ,
-                      label='Refine data',
+                      label='Refine model',
                       help='Trained isonet2 model to use for prediction.')
 
 
@@ -130,7 +143,8 @@ class ProtIsonet2Predict(ProtIsonet2Base):
     # -------------------------- STEPS functions ------------------------------
     def _initialize(self):
         # copy the star file to avoid the original one to be overwritten
-        self._copyStar()
+        protocolAttr = TRAINING_PROT if self.sourceProtocolType.get() == PROT_TRAINING else REFINE_PROT
+        self._copyStar(protocolAttr)
 
     def predictStep(self):
         logger.info(cyanStr(f' Predict step...'))
@@ -156,6 +170,7 @@ class ProtIsonet2Predict(ProtIsonet2Base):
         self._store()
 
         self._defineOutputs(**{self._possibleOutputs.tomograms.name: outTomoSet})
+        #vedi
         self._defineSourceRelation(self._getFormAttrib(PREPARE_DATA_PROT), outTomoSet)
 
 
@@ -189,7 +204,6 @@ class ProtIsonet2Predict(ProtIsonet2Base):
             f'--tomo_idx {self.tomo_idx.get()}'
         ]
 
-        #if self.
 
         if self.missingWedge_mask.get():
             cmd.append('--apply_mw_x1')
@@ -203,7 +217,11 @@ class ProtIsonet2Predict(ProtIsonet2Base):
 
     def _createOutputSet(self) -> SetOfTomograms:
         tomoFiles = sorted(glob.glob(self._getExtraPath('*.mrc')))
-        protPrepare = self._getFormAttrib(PREPARE_DATA_PROT)
+        if self.sourceProtocolType.get() == PROT_TRAINING:
+            protPrepare = self._getFormAttrib(TRAINING_PROT)
+        else:
+            protPrepare = self._getFormAttrib(REFINE_PROT)
+
         tsIds = protPrepare.getTsIdList()
         tomoSetIn = protPrepare.getTomoSet()
 
