@@ -319,8 +319,7 @@ class ProtIsonet2Refine(ProtIsonet2Base):
             f'--arch {ARCH_CHOICES[self.arch.get()]}',
             f'--loss_func {LOSS_FUNC_CHOICES[self.loss_func.get()]}',
             f'--with_preview {self.with_preview.get()}',
-            f'--input_column rlnDenoisedTomoName',
-            f'--method isonet2',
+            f'--method isonet2-n2n',
             f'--noise_level {self.noise_level.get()}',
             f'--noise_mode {self.noise_mode.get()}',
             f'--random_rot_weight {self.random_rot_weight.get()}'
