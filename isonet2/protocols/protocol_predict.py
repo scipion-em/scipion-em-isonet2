@@ -32,13 +32,13 @@ from os.path import abspath, exists
 from typing import List
 
 from isonet2 import Plugin
-from isonet2.constants import PREPARE_DATA_PROT, TOMOGRAMS_STAR
+from isonet2.constants import PREPARE_DATA_PROT, TOMOGRAMS_STAR, TRAINING_PROT, PROT_TRAINING, PROT_REFINE
 from isonet2.objects import Isonet2Model
 from isonet2.protocols.protocol_base import ProtIsonet2Base
 from pyworkflow import BETA, join
 from pyworkflow.object import String
 
-from pyworkflow.protocol import PointerParam, GPU_LIST, StringParam, BooleanParam, FloatParam, GT, IntParam
+from pyworkflow.protocol import PointerParam, GPU_LIST, StringParam, BooleanParam, FloatParam, GT, IntParam, EnumParam
 from pyworkflow.utils import Message, makePath, cyanStr, redStr, copyFile
 from tomo.objects import SetOfTomograms, Tomogram
 from tomo.utils import getTsIdsDicts
@@ -66,18 +66,32 @@ class ProtIsonet2Predict(ProtIsonet2Base):
     # --------------------------- DEFINE param functions ----------------------
     def _defineParams(self, form):
         form.addSection(label=Message.LABEL_INPUT)
-        form.addParam(PREPARE_DATA_PROT, PointerParam,
-                      pointerClass='ProtIsonet2PrepareData',
-                      important=True,
-                      label='Isonet2 Prepare data protocol.'
-                      )
-        form.addParam('model', PointerParam,
+
+
+        form.addParam('sourceProtocolType', EnumParam,
+                      choices=['Denoise (training)', 'Refine'],
+                      default=PROT_TRAINING,
+                      label='Model source type',
+                      help='Choose whether the trained model comes from a Denoise '
+                           '(training) protocol or a Refine '
+                           'protocol. This determines which models are listed below.')
+
+        form.addParam('trainingModel', PointerParam,
                       pointerClass='Isonet2Model',
-                      important=True,
-                      label='Isonet2 Model',
-                      allowsNull=False,
-                      help='Select a trained Isonet2 model.'
-                      )
+                      pointerCondition='sourceProtocolType.classes.name==ProtIsonet2Training',
+                      condition=f'sourceProtocolType == {PROT_TRAINING}',
+                      label='Denoise model (epoch)',
+                      help='Trained n2n checkpoint to use for prediction.')
+
+        form.addParam('refineModel', PointerParam,
+                      pointerClass='Isonet2Model',
+                      pointerCondition='sourceProtocolType.classes.name==ProtIsonet2Refine',
+                      condition=f'sourceProtocolType == {PROT_REFINE}' ,
+                      label='Refine model (epoch)',
+                      help='Trained isonet2 / isonet2-n2n checkpoint to use for prediction.')
+
+
+
         form.addParam('missingWedge_mask', BooleanParam,
                       label='Missing wedge mask',
                       default=True,
@@ -176,6 +190,8 @@ class ProtIsonet2Predict(ProtIsonet2Base):
             f'--padding_factor {self.padding_factor.get()}',
             f'--tomo_idx {self.tomo_idx.get()}'
         ]
+
+        if self.
 
         if self.missingWedge_mask.get():
             cmd.append('--apply_mw_x1')

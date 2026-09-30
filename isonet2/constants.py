@@ -55,6 +55,10 @@ TOMO_MASKS = 'tomoMasks'
 PREPARE_DATA_PROT = 'prepDataProt'
 PREDICT_PROT = 'predictProt'
 MAKE_MASK_PROT = 'makeMaskProt'
+TRAINING_PROT = 'trainingProt'
+
+PROT_TRAINING = 0
+PROT_REFINE = 1
 
 # CTF MODE
 CTF_NONE=0
