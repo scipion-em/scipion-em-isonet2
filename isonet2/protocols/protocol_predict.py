@@ -69,40 +69,18 @@ class ProtIsonet2Predict(ProtIsonet2Base):
     # --------------------------- DEFINE param functions ----------------------
     def _defineParams(self, form):
         form.addSection(label=Message.LABEL_INPUT)
-
-
-        form.addParam('sourceProtocolType', EnumParam,
-                      choices=['Denoise (training)', 'Refine'],
-                      default=PROT_TRAINING,
-                      label='Model source type',
-                      help='Choose whether the trained model comes from a Denoise '
-                           '(training) protocol or a Refine '
-                           'protocol. This determines which models are listed below.')
-
-        form.addParam(TRAINING_PROT,PointerParam,
-                      pointerClass='ProtIsonet2Training',
-                      condition=f'sourceProtocolType == {PROT_TRAINING}',
-                      label='Denoise data'
+        form.addParam(PREPARE_DATA_PROT, PointerParam,
+                      pointerClass='ProtIsonet2PrepareData',
+                      important=True,
+                      label='Isonet2 Prepare data protocol.'
                       )
-        form.addParam('trainingModel', PointerParam,
+        form.addParam('model', PointerParam,
                       pointerClass='Isonet2Model',
-                      condition=f'sourceProtocolType == {PROT_TRAINING}',
-                      label='Denoise model',
-                      help='Trained n2n model to use for prediction.')
-
-        form.addParam(REFINE_PROT, PointerParam,
-                     pointerClass='ProtIsonet2Refine',
-                     condition=f'sourceProtocolType == {PROT_REFINE}',
-                     label='Refine data'
-                     )
-        form.addParam('refineModel', PointerParam,
-                      pointerClass='Isonet2Model',
-                      condition=f'sourceProtocolType == {PROT_REFINE}' ,
-                      label='Refine model',
-                      help='Trained isonet2 model to use for prediction.')
-
-
-
+                      important=True,
+                      label='Isonet2 Model',
+                      allowsNull=False,
+                      help='Select a trained Isonet2 model.'
+                      )
         form.addParam('missingWedge_mask', BooleanParam,
                       label='Missing wedge mask',
                       default=True,
@@ -143,8 +121,7 @@ class ProtIsonet2Predict(ProtIsonet2Base):
     # -------------------------- STEPS functions ------------------------------
     def _initialize(self):
         # copy the star file to avoid the original one to be overwritten
-        protocolAttr = TRAINING_PROT if self.sourceProtocolType.get() == PROT_TRAINING else REFINE_PROT
-        self._copyStar(protocolAttr)
+        self._copyStar()
 
     def predictStep(self):
         logger.info(cyanStr(f' Predict step...'))
@@ -170,7 +147,6 @@ class ProtIsonet2Predict(ProtIsonet2Base):
         self._store()
 
         self._defineOutputs(**{self._possibleOutputs.tomograms.name: outTomoSet})
-        #vedi
         self._defineSourceRelation(self._getFormAttrib(PREPARE_DATA_PROT), outTomoSet)
 
 
@@ -216,11 +192,8 @@ class ProtIsonet2Predict(ProtIsonet2Base):
 
 
     def _createOutputSet(self) -> SetOfTomograms:
-        tomoFiles = sorted(glob.glob(self._getExtraPath('*.mrc')))
-        if self.sourceProtocolType.get() == PROT_TRAINING:
-            protPrepare = self._getFormAttrib(TRAINING_PROT)
-        else:
-            protPrepare = self._getFormAttrib(REFINE_PROT)
+
+        protPrepare = self._getFormAttrib(PREPARE_DATA_PROT)
 
         tsIds = protPrepare.getTsIdList()
         tomoSetIn = protPrepare.getTomoSet()
