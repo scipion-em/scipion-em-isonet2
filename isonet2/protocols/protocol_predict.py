@@ -192,14 +192,12 @@ class ProtIsonet2Predict(ProtIsonet2Base):
 
 
     def _createOutputSet(self) -> SetOfTomograms:
-
+        tomoFiles = sorted(glob.glob(self._getExtraPath('*.mrc')))
         protPrepare = self._getFormAttrib(PREPARE_DATA_PROT)
-
         tsIds = protPrepare.getTsIdList()
         tomoSetIn = protPrepare.getTomoSet()
 
         inTomoDict = getTsIdsDicts(tomoSetIn, present_ts_ids=tsIds)
-
 
         outputSet = SetOfTomograms.create(self._getPath(), template='tomograms%s.sqlite')
         outputSet.copyInfo(tomoSetIn)
