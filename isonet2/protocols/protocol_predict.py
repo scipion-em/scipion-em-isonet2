@@ -66,7 +66,7 @@ class ProtIsonet2Predict(ProtIsonet2Base):
     def _defineParams(self, form):
         form.addSection(label=Message.LABEL_INPUT)
         form.addParam(PREPARE_DATA_PROT, PointerParam,
-                      pointerClass='ProtIsonet2PrepareData',
+                      pointerClass=['ProtIsonet2PrepareData','ProtIsonet2Refine'],
                       important=True,
                       label='Isonet2 input data protocol.'
                       )
