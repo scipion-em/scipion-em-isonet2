@@ -34,6 +34,7 @@ from os.path import exists
 from isonet2 import Plugin
 from isonet2.constants import PREPARE_DATA_PROT, TOMOGRAMS_STAR
 from isonet2.objects import Isonet2Model
+
 from isonet2.protocols.protocol_base import ProtIsonet2Base
 from pyworkflow import BETA
 
@@ -62,11 +63,13 @@ class ProtIsonet2Predict(ProtIsonet2Base):
 
         self.failedTsIds = []
 
+
     # --------------------------- DEFINE param functions ----------------------
     def _defineParams(self, form):
+        from isonet2.protocols import ProtIsonet2Refine, ProtIsonet2PrepareData
         form.addSection(label=Message.LABEL_INPUT)
         form.addParam(PREPARE_DATA_PROT, PointerParam,
-                      pointerClass=['ProtIsonet2PrepareData','ProtIsonet2Refine'],
+                      pointerClass=[ProtIsonet2PrepareData,ProtIsonet2Refine],
                       important=True,
                       label='Isonet2 input data protocol.'
                       )
