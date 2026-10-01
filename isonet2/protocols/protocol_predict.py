@@ -28,21 +28,17 @@ import glob
 import logging
 import traceback
 from enum import Enum
-from os.path import abspath, exists
-from typing import List
-from xml.sax.handler import property_interning_dict
+from os.path import exists
 
-from xmipp3.protocols.protocol_align_volume_and_particles import pointerClasses
 
 from isonet2 import Plugin
 from isonet2.constants import PREPARE_DATA_PROT, TOMOGRAMS_STAR
 from isonet2.objects import Isonet2Model
 from isonet2.protocols.protocol_base import ProtIsonet2Base
-from pyworkflow import BETA, join
-from pyworkflow.object import String
+from pyworkflow import BETA
 
 from pyworkflow.protocol import PointerParam, GPU_LIST, StringParam, BooleanParam, FloatParam, GT, IntParam, EnumParam
-from pyworkflow.utils import Message, makePath, cyanStr, redStr, copyFile
+from pyworkflow.utils import Message, cyanStr, redStr
 from tomo.objects import SetOfTomograms, Tomogram
 from tomo.utils import getTsIdsDicts
 
