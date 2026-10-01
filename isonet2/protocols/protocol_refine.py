@@ -57,6 +57,8 @@ class ProtIsonet2Refine(ProtIsonet2Base):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        self.tsIdList = String()
+        self._tomoFile = String()
 
     # --------------------------- DEFINE param functions ----------------------
     def _defineParams(self, form):
@@ -300,8 +302,6 @@ class ProtIsonet2Refine(ProtIsonet2Base):
         self._store()
 
     # -------------------------- UTILS functions ------------------------------
-    def getTsIdList(self) -> List[str]:
-        return self.tsIdList.get().split(' ')
 
     def _generateArguments(self) -> str:
         output_dir = self._getExtraPath()
@@ -356,6 +356,12 @@ class ProtIsonet2Refine(ProtIsonet2Base):
             cmd.append(f'--prev_tomo_idx {self.prev_tomo_idx.get()}')
 
         return ' '.join(cmd)
+
+    def getTsIdList(self) -> List[str]:
+        return self.tsIdList.get().split(' ')
+
+    def getTomoSet(self):
+        return self._getFormAttrib(IN_TOMOS)
 
 
 
