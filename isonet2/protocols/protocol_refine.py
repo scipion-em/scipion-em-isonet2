@@ -39,6 +39,8 @@ from pyworkflow import BETA
 from pyworkflow.protocol import PointerParam, BooleanParam, EnumParam, FloatParam, LEVEL_ADVANCED, GE, GT, StringParam, \
     IntParam, GPU_LIST
 from pyworkflow.utils import Message, cyanStr, redStr, removeBaseExt
+from pyworkflow.object import String
+
 
 logger = logging.getLogger(__name__)
 
