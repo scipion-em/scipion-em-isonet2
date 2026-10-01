@@ -300,6 +300,8 @@ class ProtIsonet2Refine(ProtIsonet2Base):
         self._store()
 
     # -------------------------- UTILS functions ------------------------------
+    def getTsIdList(self) -> List[str]:
+        return self.tsIdList.get().split(' ')
 
     def _generateArguments(self) -> str:
         output_dir = self._getExtraPath()
