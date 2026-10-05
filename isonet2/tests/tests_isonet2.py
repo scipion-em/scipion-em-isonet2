@@ -228,7 +228,8 @@ class TestPytomTM(TestBaseCentralizedLayer):
                                         save_interval = 2
                                         )
         self.launchProtocol(protTraining)
-        modelTraining = getattr(protTraining, protTraining._possibleOutputs.model.name, None) #vedi
+        modelName = f'{protTraining._possibleOutputs.model.name}_full'
+        modelTraining = getattr(protTraining, modelName, None)
         return protTraining, modelTraining
 
     def _runIsonet2Predict(self, inProt: ProtIsonet2Training, model: Isonet2Model) \
