@@ -24,6 +24,24 @@
 # *  e-mail address 'scipion@cnb.csic.es'
 # *
 # **************************************************************************
+from typing import Tuple, Union, List
+
+from cistem.protocols import CistemProtTsCtffind
+from imod.constants import OUTPUT_TILTSERIES_NAME
+from imod.protocols import ProtImodExcludeViews
+from isonet2.objects import Isonet2Model
+from isonet2.protocols import ProtIsonet2PrepareData, ProtIsonet2Training, ProtIsonet2Predict
+
+from pwem.objects import VolumeMask
+from pwem.protocols import ProtImportMask
+from pyworkflow.tests import setupTestProject, DataSet
+from pyworkflow.utils import cyanStr, magentaStr
+from tomo.objects import SetOfTiltSeries, SetOfCTFTomoSeries, TiltSeries, CTFTomoSeries, SetOfTomograms
+from tomo.protocols import ProtImportTs, ProtImportTsCTF, ProtImportTomograms
+from tomo.protocols.protocol_import_ctf import ImportChoice
+from tomo.protocols.protocol_import_tomograms import OUTPUT_NAME
+from tomo.tests import DataSetRe4STATuto, RE4_STA_TUTO
+from tomo.tests.test_base_centralized_layer import TestBaseCentralizedLayer
 
 TS_03 = 'TS_03'
 TS_54 = 'TS_54'
@@ -47,7 +65,6 @@ class TestPytomTM(TestBaseCentralizedLayer):
     EXC_VIEWS = 'exc. views'
     RE_STACKED = 're-stacked'
     particleDiameter = 10
-
 
     @classmethod
     def setUpClass(cls):
@@ -149,7 +166,6 @@ class TestPytomTM(TestBaseCentralizedLayer):
         mask = getattr(protImportMask3D, 'outputMask', None)
         return mask
 
-
     @classmethod
     def _runExcludeViewsProt(cls,
                              inTsSet: SetOfTiltSeries,
@@ -189,19 +205,39 @@ class TestPytomTM(TestBaseCentralizedLayer):
                                inTsSet: SetOfTiltSeries,
                                ctfSetMsg: str,
                                tsSetMsg: str) -> None:
-        print(magentaStr(f"\n==> Running the GapStop_TM:"
+        print(magentaStr(f"\n==> Running the Prepare Data:"
                          f"\n\t- CTFs: {ctfSetMsg}"
                          f"\n\t- Tilt-series = {tsSetMsg}"))
-        protIsonet2PrepareData = self.newProtocol(ProtIsonet2PrepareData,
-                                         inTomos=self.tomoNoFidBin8,
-                                         inCtfSet=inCtfSet,
-                                         inTsSet=inTsSet,
-                                         tomoMasks=self.maskBin8
-                                         )
+        protPrepareData = self.newProtocol(ProtIsonet2PrepareData,
+                                           inTomos=self.tomoNoFidBin8,
+                                           inCtfSet=inCtfSet,
+                                           inTsSet=inTsSet,
+                                           #tomoMasks=self.maskBin8 IS IT A SET?
+                                           )
         objLabel = f'ts {tsSetMsg}, ctf {ctfSetMsg}'
-        protIsonet2PrepareData.setObjLabel(objLabel)
-        self.launchProtocol(protIsonet2PrepareData)
+        protPrepareData.setObjLabel(objLabel)
+        self.launchProtocol(protPrepareData)
+        return protPrepareData
 
-    #def _runIsonet2Training(self):
+    def _runIsonet2Training(self, inProt: ProtIsonet2PrepareData) \
+            -> Union[Isonet2Model, None]:
+        print(magentaStr(f"\n==> Prepare Data ==> Training step"))
+        protTraining = self.newProtocol(ProtIsonet2Training,
+                                        prepDataProt=inProt,
+                                        epochs = 2,
+                                        save_interval = 2
+                                        )
+        self.launchProtocol(protTraining)
+        modelTraining = getattr(protTraining, protTraining._possibleOutputs.model.name, None) #vedi
+        return protTraining, modelTraining
 
-
+    def _runIsonet2Predict(self, inProt: ProtIsonet2Training, model: Isonet2Model) \
+            -> Union[SetOfTomograms, None]:
+        print(magentaStr(f"\n==> Prepare Data ==> Training step ==> Predict step"))
+        protPredict = self.newProtocol(ProtIsonet2Predict,
+                                       inProt=inProt,
+                                       model=model
+                                       )
+        self.launchProtocol(protPredict)
+        setTomos = getattr(protPredict, protPredict._possibleOutputs.tomograms.name, None)
+        return protPredict, setTomos
