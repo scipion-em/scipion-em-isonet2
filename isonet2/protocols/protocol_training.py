@@ -283,7 +283,7 @@ class ProtIsonet2Training(ProtIsonet2Base):
         for modelFile in modelFiles:
             model = Isonet2Model(model_file=modelFile)
             modelEpoch = removeBaseExt(modelFile).replace(
-                f'network_isonet2-n2n_{ARCH_CHOICES[self.arch.get()]}_{self.cube_size.get()}_', '')
+                f'network_n2n_{ARCH_CHOICES[self.arch.get()]}_{self.cube_size.get()}_', '')
             self._defineOutputs(**{Outputobjects.model.name + f'_{modelEpoch}': model})
 
         self._store()
