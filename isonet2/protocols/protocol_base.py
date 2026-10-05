@@ -31,13 +31,20 @@ from isonet2.objects import Isonet2Model
 from pwem.protocols import EMProtocol
 from pyworkflow.object import Pointer, String
 from pyworkflow.utils import copyFile
-from tomo.objects import SetOfTomograms, SetOfTiltSeries,SetOfCTFTomoSeries
+from tomo.objects import SetOfTomograms, SetOfTiltSeries, SetOfCTFTomoSeries
 
 
 class ProtIsonet2Base(EMProtocol):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self._tomoFile = String()
+        self.tsIdList = String()
+
+    def _copyTsIdList(self, inProtocol) -> None:
+        self.tsIdList.set(inProtocol.tsIdList.get())
+
+    def _getInputTomoSet(self, inProtocol):
+        return self._getFormAttrib(inProtocol).getTomoSet()
 
     def _getFormAttrib(self, attribName: str, returnPointer: bool = False) -> Optional[Union[SetOfTiltSeries,
     SetOfTomograms, SetOfCTFTomoSeries, Pointer]]:
@@ -47,18 +54,17 @@ class ProtIsonet2Base(EMProtocol):
         else:
             return inTsPointer if returnPointer else inTsPointer.get()
 
-    def _getStarFile(self, protocol:str = PREPARE_DATA_PROT) -> str:
+    def _getStarFile(self, protocol: str = PREPARE_DATA_PROT) -> str:
         protPrepare = self._getFormAttrib(protocol)
         return protPrepare.getTomoStarFile()
 
-    def _newStarPath(self)->str:
+    def _newStarPath(self) -> str:
         return self._getExtraPath('inTomograms.star')
 
     def _copyStar(self, protocol: str = PREPARE_DATA_PROT):
         sourceStar = self._getStarFile(protocol)
         destinationStar = self._newStarPath()
         copyFile(sourceStar, destinationStar)
-
 
     def getTomoStarFile(self) -> str:
         return self._tomoFile.get()
@@ -71,4 +77,3 @@ class ProtIsonet2Base(EMProtocol):
 
     def _getPretrainedModelPath(self, pretrained_model: Isonet2Model):
         return pretrained_model.getPath()
-

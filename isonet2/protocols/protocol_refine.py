@@ -59,8 +59,7 @@ class ProtIsonet2Refine(ProtIsonet2Base):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.tsIdList = String()
-        self._tomoFile = String()
+
 
     # --------------------------- DEFINE param functions ----------------------
     def _defineParams(self, form):
@@ -280,6 +279,8 @@ class ProtIsonet2Refine(ProtIsonet2Base):
     # -------------------------- STEPS functions ------------------------------
     def _initialize(self):
         self._copyStar(MAKE_MASK_PROT)
+        inputProt = self._getFormAttrib(MAKE_MASK_PROT)
+        self._copyTsIdList(inputProt)
 
     def refineStep(self):
         logger.info(cyanStr(f' Refine step...'))
@@ -359,16 +360,8 @@ class ProtIsonet2Refine(ProtIsonet2Base):
 
         return ' '.join(cmd)
 
-    def getTsIdList(self) -> List[str]:
-        return self.tsIdList.get().split(' ')
-
     def getTomoSet(self):
-        return self._getFormAttrib(IN_TOMOS)
-
-
-
-
-
+        return self._getInputTomoSet(MAKE_MASK_PROT)
 
     # --------------------------- INFO functions ------------------------------
 

@@ -117,6 +117,8 @@ class ProtIsonet2MakeMask(ProtIsonet2Base):
     # -------------------------- STEPS functions ------------------------------
     def _initialize(self):
         self._copyStar(PREDICT_PROT)
+        inputProt = self._getFormAttrib(PREDICT_PROT)
+        self._copyTsIdList(inputProt)
 
 
     def makeMaskStep(self):
@@ -168,6 +170,9 @@ class ProtIsonet2MakeMask(ProtIsonet2Base):
             cmd.append(f'--tomo_idx {self.tomo_idx.get()}')
 
         return ' '.join(cmd)
+
+    def getTomoSet(self):
+        return self._getInputTomoSet(PREDICT_PROT)
 
 
     def _createOutputSet(self) -> SetOfTomoMasks:

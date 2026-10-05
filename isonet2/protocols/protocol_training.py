@@ -106,8 +106,8 @@ class ProtIsonet2Training(ProtIsonet2Base):
                       default=True,
                       condition=f'ctf_mode != {CTF_NONE} and not isCTFflipped',
                       help='Only shown when the input is NOT already phase-flipped. '
-                            'If enabled, training corrects the CTF sign on the input '
-                            'volumes before feeding the network'
+                           'If enabled, training corrects the CTF sign on the input '
+                           'volumes before feeding the network'
                       )
         form.addParam('clip_first_peak_mode', EnumParam,
                       label='Clip first peak mode',
@@ -169,10 +169,10 @@ class ProtIsonet2Training(ProtIsonet2Base):
                       )
         form.addParam('batch_mode', EnumParam,
                       label='Batch size selection',
-                      choices=['auto','manual'],
+                      choices=['auto', 'manual'],
                       default=BATCH_AUTO,
                       help='Number of subtomograms per optimization step; if "auto", this is automatically determined '
-                           'by multiplying the number of available GPUs by 2.'  
+                           'by multiplying the number of available GPUs by 2.'
                            'If the number of GPUs is 1, batch size is 4. '
                            'If "manual", set the value yourself.'
                       )
@@ -243,25 +243,26 @@ class ProtIsonet2Training(ProtIsonet2Base):
                             '(e.g., "1,2,4" or "5-10,15,16")'
                        )
 
-
         form.addHidden(GPU_LIST, StringParam,
                        default='0',
                        label="Choose GPU IDs",
                        help=""
                        )
-        form.addParallelSection(threads=8,mpi=0)
-
+        form.addParallelSection(threads=8, mpi=0)
 
     # --------------------------- INSERT steps functions ----------------------
     def _insertAllSteps(self):
-
         self._initialize()
+
         self._insertFunctionStep(self.trainingStep, needsGPU=True)
         self._insertFunctionStep(self.createOutputStep, needsGPU=False)
 
     # -------------------------- STEPS functions ------------------------------
     def _initialize(self):
-       self._copyStar()
+        self._copyStar()
+        inputProt = self._getFormAttrib(PREPARE_DATA_PROT)
+        self._copyTsIdList(inputProt)
+
 
     def trainingStep(self):
         logger.info(cyanStr(f' Training step...'))
@@ -273,6 +274,7 @@ class ProtIsonet2Training(ProtIsonet2Base):
             logger.error(redStr(f'Denoise training failed with the exception -> {e}'))
             logger.error(traceback.format_exc())
 
+
     def createOutputStep(self):
         tomoStarFile = self._getTomosStarName()
         self.setTomoSStarFile(tomoStarFile)
@@ -280,7 +282,8 @@ class ProtIsonet2Training(ProtIsonet2Base):
         modelFiles = sorted(glob.glob(self._getExtraPath('*_full.pt')), reverse=True)
         for modelFile in modelFiles:
             model = Isonet2Model(model_file=modelFile)
-            modelEpoch = removeBaseExt(modelFile).replace(f'network_isonet2-n2n_{ARCH_CHOICES[self.arch.get()]}_{self.cube_size.get()}_','')
+            modelEpoch = removeBaseExt(modelFile).replace(
+                f'network_isonet2-n2n_{ARCH_CHOICES[self.arch.get()]}_{self.cube_size.get()}_', '')
             self._defineOutputs(**{Outputobjects.model.name + f'_{modelEpoch}': model})
 
         self._store()
@@ -292,13 +295,13 @@ class ProtIsonet2Training(ProtIsonet2Base):
         arch = ARCH_CHOICES[self.arch.get()]
         return join(self._getExtraPath(), f'network_n2n_{arch}_{self.cube_size.get()}_full.pt')
 
+
     def _generateArguments(self) -> str:
         output_dir = self._getExtraPath()
         starFile = self._newStarPath()
         gpu = ','.join([str(el) for el in self.getGpuList()])
         pretrained_model = self.pretrained_model.get()
         ctf_mode = self.ctf_mode.get()
-
 
         cmd = [
             'denoise',
@@ -346,6 +349,11 @@ class ProtIsonet2Training(ProtIsonet2Base):
 
         return ' '.join(cmd)
 
+
+    def getTomoSet(self):
+        return self._getInputTomoSet(PREPARE_DATA_PROT)
+
+
     # --------------------------- INFO functions ------------------------------
 
     def _validate(self) -> List[str]:
@@ -375,9 +383,6 @@ class ProtIsonet2Training(ProtIsonet2Base):
                     "CTF phase correction is fully disabled: 'already phase-flipped' "
                     "is off and 'apply phase-flip during training' is also off. With "
                     "CTF mode = None, the CTF sign will never be corrected."
-                        )
-
+                )
 
         return valmsg
-
-

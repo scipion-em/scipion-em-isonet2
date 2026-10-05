@@ -30,7 +30,6 @@ import traceback
 from enum import Enum
 from os.path import exists
 
-
 from isonet2 import Plugin
 from isonet2.constants import PREPARE_DATA_PROT, TOMOGRAMS_STAR
 from isonet2.objects import Isonet2Model
@@ -63,13 +62,12 @@ class ProtIsonet2Predict(ProtIsonet2Base):
 
         self.failedTsIds = []
 
-
     # --------------------------- DEFINE param functions ----------------------
     def _defineParams(self, form):
         from isonet2.protocols import ProtIsonet2Refine, ProtIsonet2PrepareData
         form.addSection(label=Message.LABEL_INPUT)
-        form.addParam(PREPARE_DATA_PROT, PointerParam,
-                      pointerClass=[ProtIsonet2PrepareData,ProtIsonet2Refine],
+        form.addParam('inProt', PointerParam,
+                      pointerClass=[ProtIsonet2PrepareData, ProtIsonet2Refine],
                       important=True,
                       label='Isonet2 input data protocol.'
                       )
@@ -120,7 +118,10 @@ class ProtIsonet2Predict(ProtIsonet2Base):
     # -------------------------- STEPS functions ------------------------------
     def _initialize(self):
         # copy the star file to avoid the original one to be overwritten
-        self._copyStar()
+        self._copyStar('inProt')
+        # propagate tsId List
+        inProtocol = self._getFormAttrib('inProt')
+        self._copyTsIdList(inProtocol)
 
     def predictStep(self):
         logger.info(cyanStr(f' Predict step...'))
@@ -146,20 +147,12 @@ class ProtIsonet2Predict(ProtIsonet2Base):
         self._store()
 
         self._defineOutputs(**{self._possibleOutputs.tomograms.name: outTomoSet})
-        self._defineSourceRelation(self._getFormAttrib(PREPARE_DATA_PROT), outTomoSet)
-
-
-
+        #vedi
+        #self._defineSourceRelation(self._getFormAttrib(PREPARE_DATA_PROT), outTomoSet)
 
     # -------------------------- UTILS functions ------------------------------
     def _getModelPath(self, model: Isonet2Model) -> str:
         return model.getPath()
-
-    def _getTomosStarName(self) -> str:
-        return self._getExtraPath(TOMOGRAMS_STAR)
-
-    def setTomoSStarFile(self, val: str) -> None:
-        self._tomoFile.set(val)
 
     def _generateArguments(self) -> str:
 
@@ -179,7 +172,6 @@ class ProtIsonet2Predict(ProtIsonet2Base):
             f'--tomo_idx {self.tomo_idx.get()}'
         ]
 
-
         if self.missingWedge_mask.get():
             cmd.append('--apply_mw_x1')
 
@@ -188,13 +180,14 @@ class ProtIsonet2Predict(ProtIsonet2Base):
 
         return ' '.join(cmd)
 
-
+    def getTomoSet(self):
+        return self._getInputTomoSet('inProt')
 
     def _createOutputSet(self) -> SetOfTomograms:
         tomoFiles = sorted(glob.glob(self._getExtraPath('*.mrc')))
-        protPrepare = self._getFormAttrib(PREPARE_DATA_PROT)
-        tsIds = protPrepare.getTsIdList()
-        tomoSetIn = protPrepare.getTomoSet()
+        inProt = self._getFormAttrib('inProt')
+        tsIds = inProt.getTsIdList()
+        tomoSetIn = inProt.getTomoSet()
 
         inTomoDict = getTsIdsDicts(tomoSetIn, present_ts_ids=tsIds)
 
@@ -207,10 +200,9 @@ class ProtIsonet2Predict(ProtIsonet2Base):
                     tomo = Tomogram()
                     inTomo = inTomoDict[tsId]
                     tomo.copyInfo(inTomo)
-                    #tomo.setTsId(tsId)
+                    # tomo.setTsId(tsId)
                     tomo.setFileName(tomoFile)
                     outputSet.append(tomo)
                     break
 
         return outputSet
-
