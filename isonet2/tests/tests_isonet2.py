@@ -38,7 +38,7 @@ from pwem.protocols import ProtImportMask
 from pyworkflow.tests import setupTestProject, DataSet
 from pyworkflow.utils import cyanStr, magentaStr
 from tomo.objects import SetOfTiltSeries, SetOfCTFTomoSeries, TiltSeries, CTFTomoSeries, SetOfTomograms, SetOfTomoMasks
-from tomo.protocols import ProtImportTs, ProtImportTsCTF, ProtImportTomograms
+from tomo.protocols import ProtImportTs, ProtImportTsCTF, ProtImportTomograms, ProtImportTomomasks
 from tomo.protocols.protocol_import_ctf import ImportChoice
 from tomo.protocols.protocol_import_tomograms import OUTPUT_NAME
 from tomo.tests import DataSetRe4STATuto, RE4_STA_TUTO
@@ -84,7 +84,7 @@ class TestPytomTM(TestBaseCentralizedLayer):
         if eVCtf:
             cls._excludeSetViews(importedCtfs, excludedViewsDict=cls.ctfExcludedViewsDict)
         cls.tomoNoFidBin8 = cls._runImportTomograms()
-        cls.maskBin8 = cls._runImportMaskBin8()
+        #cls.maskBin8 = cls._runImportMaskBin8()
         print(
             cyanStr('\n-------------------------------- PREVIOUS PROTOCOLS FINISHED ---------------------------------'))
         return importedTs, importedCtfs
@@ -156,17 +156,32 @@ class TestPytomTM(TestBaseCentralizedLayer):
         cls.launchProtocol(protImportTomos)
         outTomos = getattr(protImportTomos, OUTPUT_NAME, None)
         return outTomos
+############
+    # @classmethod
+    # def _importTomoMasks(cls):
+    #     print(magentaStr(f"\n==> Importing data - tomoMasks:"))
+    #     protImportTomomasks = cls.newProtocol(ProtImportTomomasks,
+    #                                           filesPath=filesPath,
+    #                                           filesPattern=filesPattern,
+    #                                           inputTomos=inputTomos)
+    #     if protLabel:
+    #         protImportTomomasks.setObjLabel(protLabel)
+    #     cls.launchProtocol(protImportTomomasks)
+    #     return protImportTomomasks
+    #
 
-    @classmethod
-    def _runImportMaskBin8(cls) -> VolumeMask:
-        print(magentaStr("\n==> Resizing the reference to bin 8:"))
-        protImportMask3D = cls.newProtocol(ProtImportMask,
-                                           maskPath=cls.ds.getFile(DataSetRe4STATuto.maskHivBin8.value),
-                                           samplingRate=cls.sRateBin8)  # Bin 8
-        cls.launchProtocol(protImportMask3D)
-        mask = getattr(protImportMask3D, 'outputMask', None)
-        return mask
 
+    # @classmethod
+    # def _runImportMaskBin8(cls) -> VolumeMask:
+    #     print(magentaStr("\n==> Resizing the reference to bin 8:"))
+    #     protImportMask3D = cls.newProtocol(ProtImportMask,
+    #                                        maskPath=cls.ds.getFile(DataSetRe4STATuto.maskHivBin8.value),
+    #                                        samplingRate=cls.sRateBin8)  # Bin 8
+    #     cls.launchProtocol(protImportMask3D)
+    #     mask = getattr(protImportMask3D, 'outputMask', None)
+    #     return mask
+
+###########
     @classmethod
     def _runExcludeViewsProt(cls,
                              inTsSet: SetOfTiltSeries,
@@ -213,7 +228,7 @@ class TestPytomTM(TestBaseCentralizedLayer):
                                            inTomos=self.tomoNoFidBin8,
                                            inCtfSet=inCtfSet,
                                            inTsSet=inTsSet,
-                                           #tomoMasks=self.maskBin8 IS IT A SET?
+                                           # tomoMasks=self.maskBin8 IS IT A SET?
                                            )
         objLabel = f'ts {tsSetMsg}, ctf {ctfSetMsg}'
         protPrepareData.setObjLabel(objLabel)
@@ -225,15 +240,15 @@ class TestPytomTM(TestBaseCentralizedLayer):
         print(magentaStr(f"\n==> Prepare Data ==> Training step"))
         protTraining = self.newProtocol(ProtIsonet2Training,
                                         prepDataProt=inProt,
-                                        epochs = 2,
-                                        save_interval = 2
+                                        epochs=2,
+                                        save_interval=2
                                         )
         self.launchProtocol(protTraining)
         modelName = f'{protTraining._possibleOutputs.model.name}_full'
         modelTraining = getattr(protTraining, modelName, None)
-        return protTraining, modelTraining
+        return modelTraining
 
-    def _runIsonet2Predict(self, inProt: Union[ProtIsonet2PrepareData,ProtIsonet2Refine], model: Isonet2Model) \
+    def _runIsonet2Predict(self, inProt: Union[ProtIsonet2PrepareData, ProtIsonet2Refine], model: Isonet2Model) \
             -> Tuple[ProtIsonet2Predict, Optional[SetOfTomograms]]:
         print(magentaStr(f"\n==> Prepare Data ==> Training step ==> Predict step"))
         protPredict = self.newProtocol(ProtIsonet2Predict,
@@ -244,8 +259,15 @@ class TestPytomTM(TestBaseCentralizedLayer):
         setofTomos = getattr(protPredict, protPredict._possibleOutputs.tomograms.name, None)
         return protPredict, setofTomos
 
-    def _runIsonet2MakeMask(self, inProt:ProtIsonet2Predict) \
-            ->Tuple[ProtIsonet2MakeMask, Optional[SetOfTomoMasks] ]:
+    def _checkSetOfTomos(self, setOfTomos: SetOfTomograms) -> None:
+        # Check the results of the pytom_TM
+        self.checkTomograms(inTomoSet=setOfTomos,
+                            expectedSetSize=self.nTomos,
+                            expectedSRate=self.sRateBin8,
+                            expectedDimensions=self.expectedTomoDims)
+
+    def _runIsonet2MakeMask(self, inProt: ProtIsonet2Predict) \
+            -> Tuple[ProtIsonet2MakeMask, Optional[SetOfTomoMasks]]:
         print(magentaStr(f"\n==> Prepare Data ==> Training step ==> Predict step ==> Make mask step"))
         protMakeMask = self.newProtocol(ProtIsonet2MakeMask,
                                         inProt=inProt)
@@ -253,7 +275,10 @@ class TestPytomTM(TestBaseCentralizedLayer):
         setofTomoMasks = getattr(protMakeMask, protMakeMask._possibleOutputs.masks.name, None)
         return protMakeMask, setofTomoMasks
 
-    def _runIsonet2Refine(self, inProt:ProtIsonet2MakeMask) \
+    def _checkSetOfMasks(self, setofTomoMasks: SetOfTomoMasks) -> None:
+        pass
+
+    def _runIsonet2Refine(self, inProt: ProtIsonet2MakeMask) \
             -> Tuple[ProtIsonet2Refine, Optional[Isonet2Model]]:
         print(magentaStr(f"\n==> Prepare Data ==> Training step ==> Predict step ==> Make mask step ==> Refine step"))
         protRefine = self.newProtocol(ProtIsonet2Refine,
@@ -265,3 +290,82 @@ class TestPytomTM(TestBaseCentralizedLayer):
         modelName = f'{protRefine._possibleOutputs.model.name}_full'
         modelRefine = getattr(protRefine, modelName, None)
         return protRefine, modelRefine
+
+    # TEST
+    def _runTestIsonet2(self,
+                        inCtfSet: SetOfCTFTomoSeries,
+                        inTsSet: SetOfTiltSeries,
+                        ctfSetMsg: str,
+                        tsSetMsg: str) -> None:
+        # Run Prepare Data
+        protPrepareData = self._runIsonet2PrepareData(inCtfSet=inCtfSet,
+                                                      inTsSet=inTsSet,
+                                                      ctfSetMsg=ctfSetMsg,
+                                                      tsSetMsg=tsSetMsg)
+
+        # Run Training (Denoise)
+        modelTraining = self._runIsonet2Training(protPrepareData)
+
+        # Run Predict
+        protPredict, setofTomos = self._runIsonet2Predict(protPrepareData, modelTraining)
+        # Check the tomograms
+        self._checkSetOfTomos(setofTomos)
+
+        # Run MakeMask
+        protMakeMask, setofTomoMasks = self._runIsonet2MakeMask(protPredict)
+
+        #Run Refine
+        protRefine, modelRefine = self._runIsonet2Refine(protMakeMask)
+        # Check the masks
+        self._checkSetOfMasks(setofTomoMasks)
+
+        #Run Predict
+        protPredict, setofTomos = self._runIsonet2Predict(protRefine, modelRefine)
+        # Check the tomograms
+        self._checkSetOfTomos(setofTomos)
+
+    def testIsonet2(self):
+        importedTs, importedCtfs = self._runPreviousProtocols()
+        self._runTestIsonet2(inCtfSet=importedCtfs,
+                             inTsSet=importedTs,
+                             ctfSetMsg=self.UNMODIFIED,
+                             tsSetMsg=self.UNMODIFIED)
+
+    def testIsonet2_EV_Ctf(self):
+        importedTs, importedCtfs = self._runPreviousProtocols(eVCtf=True)
+        self._runTestIsonet2(inCtfSet=importedCtfs,
+                             inTsSet=importedTs,
+                             ctfSetMsg=self.EXC_VIEWS,
+                             tsSetMsg=self.UNMODIFIED)
+
+    def testIsonet2_EV_Ts(self):
+        importedTs, importedCtfs = self._runPreviousProtocols(eVTs=True)
+        self._runTestIsonet2(inCtfSet=importedCtfs,
+                             inTsSet=importedTs,
+                             ctfSetMsg=self.UNMODIFIED,
+                             tsSetMsg=self.EXC_VIEWS)
+
+    def testIsonet2_EV_Restacked_Ctf(self):
+        importedTs, _ = self._runPreviousProtocols()
+        ctfSetReStacked = self._genReStackedCtf()  # Gen a CTF estimated on a re-stacked TS
+        self._runTestIsonet2(inCtfSet=ctfSetReStacked,
+                             inTsSet=importedTs,
+                             ctfSetMsg=self.EXC_VIEWS,
+                             tsSetMsg=self.UNMODIFIED)
+
+    def testIsonet2_EV_Restacked_Ts(self):
+        importedTs, importedCtfs = self._runPreviousProtocols(eVTs=True)
+        tsSetReStacked = self._runExcludeViewsProt(importedTs)  # Re-stack the TS
+        self._runTestIsonet2(inCtfSet=importedCtfs,
+                             inTsSet=tsSetReStacked,
+                             ctfSetMsg=self.UNMODIFIED,
+                             tsSetMsg=self.EXC_VIEWS)
+
+
+
+
+
+
+
+
+
