@@ -24,19 +24,20 @@
 # *  e-mail address 'scipion@cnb.csic.es'
 # *
 # **************************************************************************
-from typing import Tuple, Union, List
+from typing import Tuple, Union, List, Optional
 
 from cistem.protocols import CistemProtTsCtffind
 from imod.constants import OUTPUT_TILTSERIES_NAME
 from imod.protocols import ProtImodExcludeViews
 from isonet2.objects import Isonet2Model
-from isonet2.protocols import ProtIsonet2PrepareData, ProtIsonet2Training, ProtIsonet2Predict
+from isonet2.protocols import ProtIsonet2PrepareData, ProtIsonet2Training, ProtIsonet2Predict, ProtIsonet2MakeMask, \
+    ProtIsonet2Refine
 
 from pwem.objects import VolumeMask
 from pwem.protocols import ProtImportMask
 from pyworkflow.tests import setupTestProject, DataSet
 from pyworkflow.utils import cyanStr, magentaStr
-from tomo.objects import SetOfTiltSeries, SetOfCTFTomoSeries, TiltSeries, CTFTomoSeries, SetOfTomograms
+from tomo.objects import SetOfTiltSeries, SetOfCTFTomoSeries, TiltSeries, CTFTomoSeries, SetOfTomograms, SetOfTomoMasks
 from tomo.protocols import ProtImportTs, ProtImportTsCTF, ProtImportTomograms
 from tomo.protocols.protocol_import_ctf import ImportChoice
 from tomo.protocols.protocol_import_tomograms import OUTPUT_NAME
@@ -204,7 +205,7 @@ class TestPytomTM(TestBaseCentralizedLayer):
                                inCtfSet: SetOfCTFTomoSeries,
                                inTsSet: SetOfTiltSeries,
                                ctfSetMsg: str,
-                               tsSetMsg: str) -> None:
+                               tsSetMsg: str) -> ProtIsonet2PrepareData:
         print(magentaStr(f"\n==> Running the Prepare Data:"
                          f"\n\t- CTFs: {ctfSetMsg}"
                          f"\n\t- Tilt-series = {tsSetMsg}"))
@@ -220,7 +221,7 @@ class TestPytomTM(TestBaseCentralizedLayer):
         return protPrepareData
 
     def _runIsonet2Training(self, inProt: ProtIsonet2PrepareData) \
-            -> Union[Isonet2Model, None]:
+            -> Tuple[ProtIsonet2Training, Optional[Isonet2Model]]:
         print(magentaStr(f"\n==> Prepare Data ==> Training step"))
         protTraining = self.newProtocol(ProtIsonet2Training,
                                         prepDataProt=inProt,
@@ -232,13 +233,35 @@ class TestPytomTM(TestBaseCentralizedLayer):
         modelTraining = getattr(protTraining, modelName, None)
         return protTraining, modelTraining
 
-    def _runIsonet2Predict(self, inProt: ProtIsonet2Training, model: Isonet2Model) \
-            -> Union[SetOfTomograms, None]:
+    def _runIsonet2Predict(self, inProt: Union[ProtIsonet2PrepareData,ProtIsonet2Refine], model: Isonet2Model) \
+            -> Tuple[ProtIsonet2Predict, Optional[SetOfTomograms]]:
         print(magentaStr(f"\n==> Prepare Data ==> Training step ==> Predict step"))
         protPredict = self.newProtocol(ProtIsonet2Predict,
                                        inProt=inProt,
                                        model=model
                                        )
         self.launchProtocol(protPredict)
-        setTomos = getattr(protPredict, protPredict._possibleOutputs.tomograms.name, None)
-        return protPredict, setTomos
+        setofTomos = getattr(protPredict, protPredict._possibleOutputs.tomograms.name, None)
+        return protPredict, setofTomos
+
+    def _runIsonet2MakeMask(self, inProt:ProtIsonet2Predict) \
+            ->Tuple[ProtIsonet2MakeMask, Optional[SetOfTomoMasks] ]:
+        print(magentaStr(f"\n==> Prepare Data ==> Training step ==> Predict step ==> Make mask step"))
+        protMakeMask = self.newProtocol(ProtIsonet2MakeMask,
+                                        inProt=inProt)
+        self.launchProtocol(protMakeMask)
+        setofTomoMasks = getattr(protMakeMask, protMakeMask._possibleOutputs.masks.name, None)
+        return protMakeMask, setofTomoMasks
+
+    def _runIsonet2Refine(self, inProt:ProtIsonet2MakeMask) \
+            -> Tuple[ProtIsonet2Refine, Optional[Isonet2Model]]:
+        print(magentaStr(f"\n==> Prepare Data ==> Training step ==> Predict step ==> Make mask step ==> Refine step"))
+        protRefine = self.newProtocol(ProtIsonet2Refine,
+                                      inProt=inProt,
+                                      epochs=2,
+                                      save_interval=2
+                                      )
+        self.launchProtocol(protRefine)
+        modelName = f'{protRefine._possibleOutputs.model.name}_full'
+        modelRefine = getattr(protRefine, modelName, None)
+        return protRefine, modelRefine

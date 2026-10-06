@@ -24,7 +24,7 @@
 # *  e-mail address 'scipion@cnb.csic.es'
 # *
 # **************************************************************************
-from typing import Union, Optional
+from typing import Union, Optional, List
 
 from isonet2.constants import PREPARE_DATA_PROT, TOMOGRAMS_STAR
 from isonet2.objects import Isonet2Model
@@ -40,8 +40,12 @@ class ProtIsonet2Base(EMProtocol):
         self._tomoFile = String()
         self.tsIdList = String()
 
+    def getTsIdList(self) -> List[str]:
+        return self.tsIdList.get().split(' ')
+
     def _copyTsIdList(self, inProtocol) -> None:
         self.tsIdList.set(inProtocol.tsIdList.get())
+        self._store(self.tsIdList)
 
     def _getInputTomoSet(self, inProtocol):
         return self._getFormAttrib(inProtocol).getTomoSet()

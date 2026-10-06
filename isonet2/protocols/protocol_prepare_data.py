@@ -260,9 +260,6 @@ class ProtIsonet2PrepareData(ProtIsonet2Base):
     def _getMasksDir(self) -> str:
         return self._getTmpPath(MASKS_DIR)
 
-    def getTsIdList(self) -> List[str]:
-        return self.tsIdList.get().split(' ')
-
     def getTomoSet(self):
         return self._getFormAttrib(IN_TOMOS)
 
