@@ -48,7 +48,7 @@ TS_03 = 'TS_03'
 TS_54 = 'TS_54'
 
 
-class TestPytomTM(TestBaseCentralizedLayer):
+class TestIsonet2(TestBaseCentralizedLayer):
     unbinnedSRate = DataSetRe4STATuto.unbinnedPixSize.value
     binFactor4 = 4
     binFactor8 = 8
