@@ -236,34 +236,34 @@ class ProtIsonet2Refine(ProtIsonet2Base):
         #               help='Adds artificial noise during training.'
         #               )
 
-        group1 = form.addGroup('Missing wedge')
-        group1.addParam('random_rot_weight', FloatParam,
+        mw = form.addGroup('Missing wedge')
+        mw.addParam('random_rot_weight', FloatParam,
                       label='Random rotation weight',
                       default=0.2,
                       validators=[GE(0), LE(1)],
                       expertLevel=LEVEL_ADVANCED,
                       help='Percentage of rotations applied as random augmentation.'
                       )
-        group1.addParam('mw_weight', FloatParam,
+        mw.addParam('mw_weight', FloatParam,
                        label='Missing wedge loss weight',
                        default=-1,
                        expertLevel=LEVEL_ADVANCED,
                        help='Weight for missing wedge loss. Higher values correspond to stronger '
                             'emphasis on missing wedge regions. ')
 
-        group2 = form.addGroup('Checkpoints & preview')
-        group2.addParam('save_interval', IntParam,
+        check = form.addGroup('Checkpoints & preview')
+        check.addParam('save_interval', IntParam,
                        label='Save interval (epochs)',
                        default=10,
                        validators=[GT(0)],
                        help='Interval to save model checkpoints.'
                        )
-        group2.addParam('with_preview', BooleanParam,
+        check.addParam('with_preview', BooleanParam,
                        label='Preview during training?',
                        default=False,
                        help='Run prediction every saved interval.'
                        )
-        group2.addParam('prev_tomo_idx', StringParam,
+        check.addParam('prev_tomo_idx', StringParam,
                        label='Preview tomogram index(es)',
                        condition='with_preview',
                        default=1,
