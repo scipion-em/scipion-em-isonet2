@@ -259,6 +259,8 @@ class TestIsonet2(TestBaseCentralizedLayer):
         setofTomos = getattr(protPredict, protPredict._possibleOutputs.tomograms.name, None)
         return protPredict, setofTomos
 
+
+
     def _checkSetOfTomos(self, setOfTomos: SetOfTomograms) -> None:
         # Check the results of the pytom_TM
         self.checkTomograms(inTomoSet=setOfTomos,
@@ -310,14 +312,12 @@ class TestIsonet2(TestBaseCentralizedLayer):
         protPredict, setofTomos = self._runIsonet2Predict(protPrepareData, modelTraining)
         # Check the tomograms
         self._checkSetOfTomos(setofTomos)
-
         # Run MakeMask
         protMakeMask, setofTomoMasks = self._runIsonet2MakeMask(protPredict)
-
-        #Run Refine
-        protRefine, modelRefine = self._runIsonet2Refine(protMakeMask)
         # Check the masks
         self._checkSetOfMasks(setofTomoMasks)
+        #Run Refine
+        protRefine, modelRefine = self._runIsonet2Refine(protMakeMask)
 
         #Run Predict
         protPredict, setofTomos = self._runIsonet2Predict(protRefine, modelRefine)
