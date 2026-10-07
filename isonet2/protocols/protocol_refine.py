@@ -241,15 +241,13 @@ class ProtIsonet2Refine(ProtIsonet2Base):
                       label='Random rotation weight',
                       default=0.2,
                       validators=[GE(0), LE(1)],
-                      expertLevel=LEVEL_ADVANCED,
                       help='Percentage of rotations applied as random augmentation.'
                       )
         mw.addParam('mw_weight', FloatParam,
                        label='Missing wedge loss weight',
                        default=-1,
-                       expertLevel=LEVEL_ADVANCED,
                        help='Weight for missing wedge loss. Higher values correspond to stronger '
-                            'emphasis on missing wedge regions. ')
+                            'emphasis on missing wedge regions. Default: -1 (disabled). ')
 
         check = form.addGroup('Checkpoints & preview')
         check.addParam('save_interval', IntParam,
