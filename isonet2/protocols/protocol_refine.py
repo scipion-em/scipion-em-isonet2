@@ -237,7 +237,7 @@ class ProtIsonet2Refine(ProtIsonet2Base):
         #               )
 
         group = form.addGroup('Missing wedge')
-        form.addParam('random_rot_weight', FloatParam,
+        group.addParam('random_rot_weight', FloatParam,
                       label='Random rotation weight',
                       default=0.2,
                       validators=[GE(0), LE(1)],
