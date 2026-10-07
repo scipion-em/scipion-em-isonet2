@@ -37,10 +37,9 @@ from isonet2.objects import Isonet2Model
 from isonet2.protocols.protocol_base import ProtIsonet2Base
 from pyworkflow import BETA
 from pyworkflow.protocol import PointerParam, BooleanParam, EnumParam, FloatParam, LEVEL_ADVANCED, GE, GT, StringParam, \
-    IntParam, GPU_LIST
+    IntParam, GPU_LIST, LE
 from pyworkflow.utils import Message, cyanStr, redStr, removeBaseExt
 from pyworkflow.object import String
-
 
 logger = logging.getLogger(__name__)
 
@@ -59,7 +58,6 @@ class ProtIsonet2Refine(ProtIsonet2Base):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-
 
     # --------------------------- DEFINE param functions ----------------------
     def _defineParams(self, form):
@@ -222,26 +220,36 @@ class ProtIsonet2Refine(ProtIsonet2Base):
                       expertLevel=LEVEL_ADVANCED,
                       help='If set to "Yes", float16/mixed precision to reduce VRAM and speed up training is used.'
                       )
-        form.addParam('noise_mode', EnumParam,
-                      label='Noise mode',
-                      choices=['nofilter','ramp','hamming'],
-                      default=NOISE_MODE_NONE,
-                      expertLevel=LEVEL_ADVANCED,
-                      help='Controls filter applied when generating synthetic noise (None, ramp, hamming).'
-                      )
-        form.addParam('noise_level', IntParam,
-                      label='Noise level',
-                      default=0,
-                      validators=[GE(0)],
-                      expertLevel=LEVEL_ADVANCED,
-                      help='Adds artificial noise during training.'
-                      )
+        # exposed only whent the methos is isonet2
+        # form.addParam('noise_mode', EnumParam,
+        #               label='Noise mode',
+        #               choices=['nofilter','ramp','hamming'],
+        #               default=NOISE_MODE_NONE,
+        #               expertLevel=LEVEL_ADVANCED,
+        #               help='Controls filter applied when generating synthetic noise (None, ramp, hamming).'
+        #               )
+        # form.addParam('noise_level', IntParam,
+        #               label='Noise level',
+        #               default=0,
+        #               validators=[GE(0)],
+        #               expertLevel=LEVEL_ADVANCED,
+        #               help='Adds artificial noise during training.'
+        #               )
+
+        group = form.addGroup('Missing wedge')
         form.addParam('random_rot_weight', FloatParam,
                       label='Random rotation weight',
                       default=0.2,
+                      validators=[GE(0), LE(1)],
                       expertLevel=LEVEL_ADVANCED,
                       help='Percentage of rotations applied as random augmentation.'
                       )
+        group.addParam('mw_weight', FloatParam,
+                       label='Missing wedge loss weight',
+                       default=-1,
+                       expertLevel=LEVEL_ADVANCED,
+                       help='Weight for missing wedge loss. Higher values correspond to stronger '
+                            'emphasis on missing wedge regions. ')
 
         group = form.addGroup('Checkpoints & preview')
         group.addParam('save_interval', IntParam,
@@ -299,9 +307,10 @@ class ProtIsonet2Refine(ProtIsonet2Base):
         modelFiles = sorted(glob.glob(self._getExtraPath('*_full.pt')), reverse=True)
         for modelFile in modelFiles:
             model = Isonet2Model(model_file=modelFile)
-            modelEpoch = removeBaseExt(modelFile).replace(f'network_isonet2-n2n_{ARCH_CHOICES[self.arch.get()]}_{self.cube_size.get()}_', '')
+            modelEpoch = removeBaseExt(modelFile).replace(
+                f'network_isonet2-n2n_{ARCH_CHOICES[self.arch.get()]}_{self.cube_size.get()}_', '')
             self._defineOutputs(**{Outputobjects.model.name + f'_{modelEpoch}': model})
-            #self._defineSourceRelation(self._getFormAttrib(MAKE_MASK_PROT), model)
+            # self._defineSourceRelation(self._getFormAttrib(MAKE_MASK_PROT), model)
         self._store()
 
     # -------------------------- UTILS functions ------------------------------
@@ -312,7 +321,6 @@ class ProtIsonet2Refine(ProtIsonet2Base):
         gpu = ','.join([str(el) for el in self.getGpuList()])
         pretrained_model = self.pretrained_model.get()
         ctf_mode = self.ctf_mode.get()
-
 
         cmd = [
             'refine',
@@ -333,8 +341,8 @@ class ProtIsonet2Refine(ProtIsonet2Base):
             f'--loss_func {LOSS_FUNC_CHOICES[self.loss_func.get()]}',
             f'--with_preview {self.with_preview.get()}',
             f'--method isonet2-n2n',
-            f'--noise_level {self.noise_level.get()}',
-            f'--noise_mode {self.noise_mode.get()}',
+            # f'--noise_level {self.noise_level.get()}',
+            # f'--noise_mode {self.noise_mode.get()}',
             f'--random_rot_weight {self.random_rot_weight.get()}'
         ]
 
@@ -357,6 +365,9 @@ class ProtIsonet2Refine(ProtIsonet2Base):
 
         if self.with_preview.get():
             cmd.append(f'--prev_tomo_idx {self.prev_tomo_idx.get()}')
+
+        if self.mw_weight.get() > 0:
+            cmd.append(f'--mw_weight {self.mw_weight.get()}')
 
         return ' '.join(cmd)
 
