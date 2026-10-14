@@ -24,6 +24,7 @@
 # *  e-mail address 'scipion@cnb.csic.es'
 # *
 # **************************************************************************
+import os
 from typing import Tuple, Union, List, Optional
 
 from cistem.protocols import CistemProtTsCtffind
@@ -47,14 +48,6 @@ from tomo.tests.test_base_centralized_layer import TestBaseCentralizedLayer
 class TestIsonet2(TestBaseCentralizedLayer):
     nTomos = 2
     expectedTomoDims = [1024, 1440, 300]
-    # excludedViewsDict = {
-    #     TS_03: [0, 1, 2, 38, 39],
-    #     TS_54: [0, 1, 38, 39, 40]
-    # }
-    # ctfExcludedViewsDict = {
-    #     TS_03: [0, 1, 38, 39],
-    #     TS_54: [0, 39, 40]
-    # }
     UNMODIFIED = 'unmodified'
     EXC_VIEWS = 'exc. views'
     RE_STACKED = 're-stacked'
@@ -219,6 +212,10 @@ class TestIsonet2(TestBaseCentralizedLayer):
         self.launchProtocol(protPrepareData)
         return protPrepareData
 
+    def _checkStar(self, protPrepareData: ProtIsonet2PrepareData) -> None:
+        starFile=protPrepareData.getTomoStarFile()
+        self.assertTrue(os.path.exists(starFile), f'{starFile} was not generated')  # check if the star file exists
+
     def _runIsonet2Training(self, inProt: ProtIsonet2PrepareData) \
             -> Optional[Isonet2Model]:
         print(magentaStr(f"\n==> Prepare Data ==> Training step"))
@@ -232,7 +229,11 @@ class TestIsonet2(TestBaseCentralizedLayer):
         modelTraining = getattr(protTraining, modelName, None)
         return modelTraining
 
-    #check model
+    def _checkModel(self, model:Isonet2Model) -> None:
+        # Check the Model
+        self.assertIsNotNone(model, 'The training did not produce the final model') #check if the output exists
+        modelPath=model.getPath()
+        self.assertTrue(os.path.exists(modelPath),f'{modelPath} does not exist') #check if the file was exists
 
     def _runIsonet2Predict(self, inProt: Union[ProtIsonet2PrepareData, ProtIsonet2Refine], model: Isonet2Model) \
             -> Tuple[ProtIsonet2Predict, Optional[SetOfTomograms]]:
@@ -256,8 +257,6 @@ class TestIsonet2(TestBaseCentralizedLayer):
                             hasHalves=True,
                             testSetAcqObj=acq,
                             testAcqObj=acq)
-        #add the expected size to test what happens with excluded words
-        # call x2
 
     def _runIsonet2MakeMask(self, inProt: ProtIsonet2Predict) \
             -> Tuple[ProtIsonet2MakeMask, Optional[SetOfTomoMasks]]:
@@ -299,10 +298,12 @@ class TestIsonet2(TestBaseCentralizedLayer):
                                                       inTsSet=inTsSet,
                                                       ctfSetMsg=ctfSetMsg,
                                                       tsSetMsg=tsSetMsg)
-
+        # Check if the star file was generated
+        self._checkStar(protPrepareData)
         # Run Training (Denoise)
         modelTraining = self._runIsonet2Training(protPrepareData)
-
+        # Check the training model
+        self._checkModel(modelTraining)
         # Run Predict
         protPredict, setofTomos = self._runIsonet2Predict(protPrepareData, modelTraining)
         # Check the tomograms
@@ -313,7 +314,8 @@ class TestIsonet2(TestBaseCentralizedLayer):
         self._checkSetOfMasks(setofTomoMasks)
         #Run Refine
         protRefine, modelRefine = self._runIsonet2Refine(protMakeMask)
-
+        # Check the refine model
+        self._checkModel(modelRefine)
         #Run Predict
         protPredict, setofTomos = self._runIsonet2Predict(protRefine, modelRefine)
         # Check the tomograms
