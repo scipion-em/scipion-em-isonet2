@@ -41,40 +41,32 @@ from tomo.objects import SetOfTiltSeries, SetOfCTFTomoSeries, TiltSeries, CTFTom
 from tomo.protocols import ProtImportTs, ProtImportTsCTF, ProtImportTomograms, ProtImportTomomasks
 from tomo.protocols.protocol_import_ctf import ImportChoice
 from tomo.protocols.protocol_import_tomograms import OUTPUT_NAME
-from tomo.tests import DataSetRe4STATuto, RE4_STA_TUTO
+from tomo.tests import DataSetRe4STATuto, RE4_STA_TUTO, EMPIAR_10491_ODD_EVEN, tiltStep, DataSetEmd10491_Odd_Even
 from tomo.tests.test_base_centralized_layer import TestBaseCentralizedLayer
 
-TS_03 = 'TS_03'
-TS_54 = 'TS_54'
-
-
 class TestIsonet2(TestBaseCentralizedLayer):
-    unbinnedSRate = DataSetRe4STATuto.unbinnedPixSize.value
-    binFactor4 = 4
-    binFactor8 = 8
     nTomos = 2
-    expectedTomoDims = [480, 464, 140]
-    excludedViewsDict = {
-        TS_03: [0, 1, 2, 38, 39],
-        TS_54: [0, 1, 38, 39, 40]
-    }
-    ctfExcludedViewsDict = {
-        TS_03: [0, 1, 38, 39],
-        TS_54: [0, 39, 40]
-    }
+    expectedTomoDims = [1024, 1440, 300]
+    # excludedViewsDict = {
+    #     TS_03: [0, 1, 2, 38, 39],
+    #     TS_54: [0, 1, 38, 39, 40]
+    # }
+    # ctfExcludedViewsDict = {
+    #     TS_03: [0, 1, 38, 39],
+    #     TS_54: [0, 39, 40]
+    # }
     UNMODIFIED = 'unmodified'
     EXC_VIEWS = 'exc. views'
     RE_STACKED = 're-stacked'
-    particleDiameter = 10
 
     @classmethod
     def setUpClass(cls):
         setupTestProject(cls)
-        cls.ds = DataSet.getDataSet(RE4_STA_TUTO)
-        cls.sRateBin8 = cls.unbinnedSRate * cls.binFactor8
+        cls.ds = DataSet.getDataSet(EMPIAR_10491_ODD_EVEN)
+        cls.sRate = 3.16
 
     @classmethod
-    def _runPreviousProtocols(cls, eVCtf: bool = False, eVTs: bool = False) \
+    def _runPreviousProtocols(cls, eVCtf: bool = False, eVTs: bool = False, tomoMasks:bool=False) \
             -> Tuple[SetOfTiltSeries, SetOfCTFTomoSeries]:
         print(cyanStr('--------------------------------- RUNNING PREVIOUS PROTOCOLS ---------------------------------'))
         importedTs = cls._runImportTs()
@@ -83,8 +75,10 @@ class TestIsonet2(TestBaseCentralizedLayer):
         importedCtfs = cls._runImportCtf(importedTs)
         if eVCtf:
             cls._excludeSetViews(importedCtfs, excludedViewsDict=cls.ctfExcludedViewsDict)
-        cls.tomoNoFidBin8 = cls._runImportTomograms()
-        #cls.maskBin8 = cls._runImportMaskBin8()
+        cls.tomosOddEven = cls._runImportTomograms()
+        cls.setOftomoMasks = None
+        if tomoMasks:
+            cls.setOfInputTomoMasks = cls._runImportTomoMasks(cls.tomosOddEven)
         print(
             cyanStr('\n-------------------------------- PREVIOUS PROTOCOLS FINISHED ---------------------------------'))
         return importedTs, importedCtfs
@@ -117,18 +111,21 @@ class TestIsonet2(TestBaseCentralizedLayer):
     def _runImportTs(cls) -> SetOfTiltSeries:
         print(magentaStr("\n==> Importing the tilt series:"))
         protImportTs = cls.newProtocol(ProtImportTs,
-                                       filesPath=cls.ds.getFile(DataSetRe4STATuto.tsPath.value),
-                                       filesPattern=DataSetRe4STATuto.tsPattern.value,
-                                       exclusionWords=DataSetRe4STATuto.exclusionWordsTs03ts54.value,
-                                       anglesFrom=2,  # From tlt file
-                                       voltage=DataSetRe4STATuto.voltage.value,
-                                       magnification=DataSetRe4STATuto.magnification.value,
-                                       sphericalAberration=DataSetRe4STATuto.sphericalAb.value,
-                                       amplitudeContrast=DataSetRe4STATuto.amplitudeContrast.value,
-                                       samplingRate=cls.unbinnedSRate,
-                                       doseInitial=DataSetRe4STATuto.initialDose.value,
-                                       dosePerFrame=DataSetRe4STATuto.dosePerTiltImg.value,
-                                       tiltAxisAngle=DataSetRe4STATuto.tiltAxisAngle.value)
+                                       filesPath=cls.ds.getFile(DataSetEmd10491_Odd_Even.tsDir.value),
+                                       filesPattern=DataSetEmd10491_Odd_Even.tsPattern.value,
+                                       exclusionWords=DataSetEmd10491_Odd_Even.exclusionWordsTs32.value,
+                                       anglesFrom=0,  # From range
+                                       minAngle=-46,
+                                       maxAngle=33,
+                                       stepAngle=tiltStep,
+                                       voltage=DataSetEmd10491_Odd_Even.voltage.value,
+                                       magnification=DataSetEmd10491_Odd_Even.magnification.value,
+                                       sphericalAberration=DataSetEmd10491_Odd_Even.sphericalAb.value,
+                                       amplitudeContrast=DataSetEmd10491_Odd_Even.amplitudeContrast.value,
+                                       samplingRate=cls.sRate,
+                                       doseInitial=DataSetEmd10491_Odd_Even.initialDose.value,
+                                       dosePerFrame=DataSetEmd10491_Odd_Even.dosePerTiltImg.value,
+                                       tiltAxisAngle=DataSetEmd10491_Odd_Even.tiltAxisAngle.value)
 
         cls.launchProtocol(protImportTs)
         tsImported = getattr(protImportTs, 'outputTiltSeries', None)
@@ -138,9 +135,9 @@ class TestIsonet2(TestBaseCentralizedLayer):
     def _runImportCtf(cls, importedTs: SetOfTiltSeries) -> SetOfCTFTomoSeries:
         print(magentaStr("\n==> Importing the CTFs:"))
         protImportCtf = cls.newProtocol(ProtImportTsCTF,
-                                        filesPath=cls.ds.getFile(DataSetRe4STATuto.tsPath.value),
-                                        filesPattern=DataSetRe4STATuto.ctfPattern.value,
-                                        importFrom=ImportChoice.CTFFIND.value,
+                                        filesPath=cls.ds.getFile(DataSetEmd10491_Odd_Even.ctfDir.value),
+                                        filesPattern=DataSetEmd10491_Odd_Even.ctfFilesPattern.value,
+                                        importFrom=ImportChoice.IMOD.value,
                                         inputSetOfTiltSeries=importedTs)
         cls.launchProtocol(protImportCtf)
         outputCtfs = getattr(protImportCtf, protImportCtf._possibleOutputs.CTFs.name, None)
@@ -150,38 +147,25 @@ class TestIsonet2(TestBaseCentralizedLayer):
     def _runImportTomograms(cls) -> SetOfTomograms:
         print(magentaStr("\n==> Importing the tomograms:"))
         protImportTomos = cls.newProtocol(ProtImportTomograms,
-                                          filesPath=cls.ds.getFile(DataSetRe4STATuto.tomogramsNoFidPath.value),
-                                          filesPattern='*.mrc',
-                                          samplingRate=cls.sRateBin8)  # Bin 8
+                                          filesPath=cls.ds.getFile(DataSetEmd10491_Odd_Even.tomoDir.value),
+                                          filesPattern=DataSetEmd10491_Odd_Even.patter.value,
+                                          samplingRate=cls.sRate,
+                                          importOddEven=True)
         cls.launchProtocol(protImportTomos)
-        outTomos = getattr(protImportTomos, OUTPUT_NAME, None)
-        return outTomos
-############
+        tomoOddEven = getattr(protImportTomos, OUTPUT_NAME, None)
+        return tomoOddEven
+
     # @classmethod
-    # def _importTomoMasks(cls):
-    #     print(magentaStr(f"\n==> Importing data - tomoMasks:"))
+    # def _runImportTomoMasks(cls,importedTomo: SetOfTomograms)->SetOfTomoMasks:
+    #     print(magentaStr(f"\n==> Importing a set of tomoMasks:"))
     #     protImportTomomasks = cls.newProtocol(ProtImportTomomasks,
     #                                           filesPath=filesPath,
     #                                           filesPattern=filesPattern,
-    #                                           inputTomos=inputTomos)
-    #     if protLabel:
-    #         protImportTomomasks.setObjLabel(protLabel)
+    #                                           samplingRate=cls.sRate,
+    #                                           inputTomos=importedTomo)
     #     cls.launchProtocol(protImportTomomasks)
-    #     return protImportTomomasks
-    #
+    #     return getattr(protImportSetOfTomoMasks, ProtImportTomomasks._possibleOutputs.tomomasks.name, None)
 
-
-    # @classmethod
-    # def _runImportMaskBin8(cls) -> VolumeMask:
-    #     print(magentaStr("\n==> Resizing the reference to bin 8:"))
-    #     protImportMask3D = cls.newProtocol(ProtImportMask,
-    #                                        maskPath=cls.ds.getFile(DataSetRe4STATuto.maskHivBin8.value),
-    #                                        samplingRate=cls.sRateBin8)  # Bin 8
-    #     cls.launchProtocol(protImportMask3D)
-    #     mask = getattr(protImportMask3D, 'outputMask', None)
-    #     return mask
-
-###########
     @classmethod
     def _runExcludeViewsProt(cls,
                              inTsSet: SetOfTiltSeries,
@@ -225,10 +209,10 @@ class TestIsonet2(TestBaseCentralizedLayer):
                          f"\n\t- CTFs: {ctfSetMsg}"
                          f"\n\t- Tilt-series = {tsSetMsg}"))
         protPrepareData = self.newProtocol(ProtIsonet2PrepareData,
-                                           inTomos=self.tomoNoFidBin8,
+                                           inTomos=self.tomosOddEven,
                                            inCtfSet=inCtfSet,
                                            inTsSet=inTsSet,
-                                           # tomoMasks=self.maskBin8 IS IT A SET?
+                                           tomoMasks=self.setOftomoMasks
                                            )
         objLabel = f'ts {tsSetMsg}, ctf {ctfSetMsg}'
         protPrepareData.setObjLabel(objLabel)
@@ -236,17 +220,19 @@ class TestIsonet2(TestBaseCentralizedLayer):
         return protPrepareData
 
     def _runIsonet2Training(self, inProt: ProtIsonet2PrepareData) \
-            -> Tuple[ProtIsonet2Training, Optional[Isonet2Model]]:
+            -> Optional[Isonet2Model]:
         print(magentaStr(f"\n==> Prepare Data ==> Training step"))
         protTraining = self.newProtocol(ProtIsonet2Training,
                                         prepDataProt=inProt,
-                                        epochs=2,
-                                        save_interval=2
+                                        epochs=1,
+                                        save_interval=1
                                         )
         self.launchProtocol(protTraining)
-        modelName = f'{protTraining._possibleOutputs.model.name}_full'
+        modelName = f'{protTraining._possibleOutputs.model.name}_full' #use the final model
         modelTraining = getattr(protTraining, modelName, None)
         return modelTraining
+
+    #check model
 
     def _runIsonet2Predict(self, inProt: Union[ProtIsonet2PrepareData, ProtIsonet2Refine], model: Isonet2Model) \
             -> Tuple[ProtIsonet2Predict, Optional[SetOfTomograms]]:
@@ -259,14 +245,19 @@ class TestIsonet2(TestBaseCentralizedLayer):
         setofTomos = getattr(protPredict, protPredict._possibleOutputs.tomograms.name, None)
         return protPredict, setofTomos
 
-
-
-    def _checkSetOfTomos(self, setOfTomos: SetOfTomograms) -> None:
-        # Check the results of the pytom_TM
+    def _checkSetOfTomos(self, setOfTomos: SetOfTomograms, expectedSize:int=2) -> None:
+        # Check the Tomograms
+        acq = DataSetEmd10491_Odd_Even.acq.value
         self.checkTomograms(inTomoSet=setOfTomos,
-                            expectedSetSize=self.nTomos,
-                            expectedSRate=self.sRateBin8,
-                            expectedDimensions=self.expectedTomoDims)
+                            expectedSetSize=expectedSize,
+                            expectedSRate=self.sRate,
+                            expectedDimensions=self.expectedTomoDims,
+                            hasOddEven=False,
+                            hasHalves=True,
+                            testSetAcqObj=acq,
+                            testAcqObj=acq)
+        #add the expected size to test what happens with excluded words
+        # call x2
 
     def _runIsonet2MakeMask(self, inProt: ProtIsonet2Predict) \
             -> Tuple[ProtIsonet2MakeMask, Optional[SetOfTomoMasks]]:
@@ -277,16 +268,20 @@ class TestIsonet2(TestBaseCentralizedLayer):
         setofTomoMasks = getattr(protMakeMask, protMakeMask._possibleOutputs.masks.name, None)
         return protMakeMask, setofTomoMasks
 
-    def _checkSetOfMasks(self, setofTomoMasks: SetOfTomoMasks) -> None:
-        pass
+    def _checkSetOfMasks(self, setofTomoMasks: SetOfTomoMasks,expectedSize:int=2) -> None:
+        # Check the set of tomoMask generated by ProtIsonet2MakeMask
+        self.checkTomoMasks(inTomoMasks=setofTomoMasks,
+                            expectedSetSize=expectedSize,
+                            expectedSRate=self.sRate,
+                            expectedDimensions=self.expectedTomoDims)
 
     def _runIsonet2Refine(self, inProt: ProtIsonet2MakeMask) \
             -> Tuple[ProtIsonet2Refine, Optional[Isonet2Model]]:
         print(magentaStr(f"\n==> Prepare Data ==> Training step ==> Predict step ==> Make mask step ==> Refine step"))
         protRefine = self.newProtocol(ProtIsonet2Refine,
                                       inProt=inProt,
-                                      epochs=2,
-                                      save_interval=2
+                                      epochs=1,
+                                      save_interval=1
                                       )
         self.launchProtocol(protRefine)
         modelName = f'{protRefine._possibleOutputs.model.name}_full'
