@@ -45,9 +45,20 @@ from tomo.protocols.protocol_import_tomograms import OUTPUT_NAME
 from tomo.tests import DataSetRe4STATuto, RE4_STA_TUTO, EMPIAR_10491_ODD_EVEN, tiltStep, DataSetEmd10491_Odd_Even
 from tomo.tests.test_base_centralized_layer import TestBaseCentralizedLayer
 
+TS_1 = 'TS_1'
+TS_32 = 'TS_32'
+
 class TestIsonet2(TestBaseCentralizedLayer):
     nTomos = 2
     expectedTomoDims = [1024, 1440, 300]
+    excludedViewsDict = {
+        TS_1: [0, 1, 2, 40, 41],
+        TS_32: [0, 1, 38, 39, 40]
+    }
+    ctfExcludedViewsDict = {
+        TS_1: [0, 1, 38, 39],
+        TS_32: [0, 39, 40]
+    }
     UNMODIFIED = 'unmodified'
     EXC_VIEWS = 'exc. views'
     RE_STACKED = 're-stacked'
@@ -208,7 +219,7 @@ class TestIsonet2(TestBaseCentralizedLayer):
                                            inTsSet=inTsSet,
                                            tomoMasks=self.setOfInputTomoMasks
                                            )
-        objLabel = f'ts {tsSetMsg}, ctf {ctfSetMsg}'
+        objLabel = f'Isonet2 - Prepare Data: ts {tsSetMsg}, ctf {ctfSetMsg}'
         protPrepareData.setObjLabel(objLabel)
         self.launchProtocol(protPrepareData)
         return protPrepareData
@@ -254,7 +265,7 @@ class TestIsonet2(TestBaseCentralizedLayer):
                             expectedSetSize=expectedSize,
                             expectedSRate=self.sRate,
                             expectedDimensions=self.expectedTomoDims,
-                            hasOddEven=False,
+                            hasOddEven=True,
                             hasHalves=True,
                             testSetAcqObj=acq,
                             testAcqObj=acq)
