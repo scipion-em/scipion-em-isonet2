@@ -55,7 +55,7 @@ class ProtIsonet2Training(ProtIsonet2Base):
     _label = 'Training'
     _devStatus = BETA
 
-    # _possibleOutputs = Outputobjects
+    _possibleOutputs = Outputobjects
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
