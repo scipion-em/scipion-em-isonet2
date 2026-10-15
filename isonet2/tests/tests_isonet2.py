@@ -234,7 +234,7 @@ class TestIsonet2(TestBaseCentralizedLayer):
         # Check the Model
         self.assertIsNotNone(model, 'The training did not produce the final model') #check if the output exists
         modelPath=model.getPath()
-        self.assertTrue(os.path.exists(modelPath),f'{modelPath} does not exist') #check if the file was exists
+        self.assertTrue(os.path.exists(modelPath),f'{modelPath} does not exist') #check if the file exists
 
     def _runIsonet2Predict(self, inProt: Union[ProtIsonet2PrepareData, ProtIsonet2Refine], model: Isonet2Model) \
             -> Tuple[ProtIsonet2Predict, Optional[SetOfTomograms]]:
