@@ -69,9 +69,9 @@ class TestIsonet2(TestBaseCentralizedLayer):
         if eVCtf:
             cls._excludeSetViews(importedCtfs, excludedViewsDict=cls.ctfExcludedViewsDict)
         cls.tomosOddEven = cls._runImportTomograms()
-        cls.setOftomoMasks = None
-        if tomoMasks:
-            cls.setOfInputTomoMasks = cls._runImportTomoMasks(cls.tomosOddEven)
+        cls.setOfInputTomoMasks = None
+        # if tomoMasks:
+        #     cls.setOfInputTomoMasks = cls._runImportTomoMasks(cls.tomosOddEven)
         print(
             cyanStr('\n-------------------------------- PREVIOUS PROTOCOLS FINISHED ---------------------------------'))
         return importedTs, importedCtfs
@@ -103,22 +103,23 @@ class TestIsonet2(TestBaseCentralizedLayer):
     @classmethod
     def _runImportTs(cls) -> SetOfTiltSeries:
         print(magentaStr("\n==> Importing the tilt series:"))
+        acq = DataSetEmd10491_Odd_Even.acq.value
         protImportTs = cls.newProtocol(ProtImportTs,
                                        filesPath=cls.ds.getFile(DataSetEmd10491_Odd_Even.tsDir.value),
                                        filesPattern=DataSetEmd10491_Odd_Even.tsPattern.value,
                                        exclusionWords=DataSetEmd10491_Odd_Even.exclusionWordsTs32.value,
                                        anglesFrom=0,  # From range
-                                       minAngle=-46,
-                                       maxAngle=33,
-                                       stepAngle=tiltStep,
-                                       voltage=DataSetEmd10491_Odd_Even.voltage.value,
-                                       magnification=DataSetEmd10491_Odd_Even.magnification.value,
-                                       sphericalAberration=DataSetEmd10491_Odd_Even.sphericalAb.value,
-                                       amplitudeContrast=DataSetEmd10491_Odd_Even.amplitudeContrast.value,
+                                       minAngle=-34,
+                                       maxAngle=46,
+                                       stepAngle=acq.getStep(),
+                                       voltage=acq.getVoltage(),
+                                       magnification=acq.getMagnification(),
+                                       sphericalAberration=acq.getSphericalAberration(),
+                                       amplitudeContrast=acq.getAmplitudeContrast(),
                                        samplingRate=cls.sRate,
-                                       doseInitial=DataSetEmd10491_Odd_Even.initialDose.value,
-                                       dosePerFrame=DataSetEmd10491_Odd_Even.dosePerTiltImg.value,
-                                       tiltAxisAngle=DataSetEmd10491_Odd_Even.tiltAxisAngle.value)
+                                       doseInitial=acq.getDoseInitial(),
+                                       dosePerFrame=acq.getDosePerFrame(),
+                                       tiltAxisAngle=acq.getTiltAxisAngle())
 
         cls.launchProtocol(protImportTs)
         tsImported = getattr(protImportTs, 'outputTiltSeries', None)
@@ -141,7 +142,7 @@ class TestIsonet2(TestBaseCentralizedLayer):
         print(magentaStr("\n==> Importing the tomograms:"))
         protImportTomos = cls.newProtocol(ProtImportTomograms,
                                           filesPath=cls.ds.getFile(DataSetEmd10491_Odd_Even.tomoDir.value),
-                                          filesPattern=DataSetEmd10491_Odd_Even.patter.value,
+                                          filesPattern=DataSetEmd10491_Odd_Even.pattern.value,
                                           samplingRate=cls.sRate,
                                           importOddEven=True)
         cls.launchProtocol(protImportTomos)
@@ -205,7 +206,7 @@ class TestIsonet2(TestBaseCentralizedLayer):
                                            inTomos=self.tomosOddEven,
                                            inCtfSet=inCtfSet,
                                            inTsSet=inTsSet,
-                                           tomoMasks=self.setOftomoMasks
+                                           tomoMasks=self.setOfInputTomoMasks
                                            )
         objLabel = f'ts {tsSetMsg}, ctf {ctfSetMsg}'
         protPrepareData.setObjLabel(objLabel)
@@ -358,6 +359,12 @@ class TestIsonet2(TestBaseCentralizedLayer):
                              ctfSetMsg=self.UNMODIFIED,
                              tsSetMsg=self.EXC_VIEWS)
 
+    # def testIsonet2_TomoMasks(self):
+    #     importedTs, importedCtfs = self._runPreviousProtocols(tomoMasks=True)
+    #     self._runTestIsonet2(inCtfSet=importedCtfs,
+    #                          inTsSet=importedTs,
+    #                          ctfSetMsg=self.UNMODIFIED,
+    #                          tsSetMsg=self.UNMODIFIED)
 
 
 
