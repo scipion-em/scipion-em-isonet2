@@ -249,7 +249,6 @@ class TestIsonet2(TestBaseCentralizedLayer):
 
     def _runIsonet2Predict(self, inProt: Union[ProtIsonet2PrepareData, ProtIsonet2Refine], model: Isonet2Model) \
             -> Tuple[ProtIsonet2Predict, Optional[SetOfTomograms]]:
-        print(magentaStr(f"\n==> Prepare Data ==> Training step ==> Predict step"))
         protPredict = self.newProtocol(ProtIsonet2Predict,
                                        inProt=inProt,
                                        model=model
@@ -317,6 +316,7 @@ class TestIsonet2(TestBaseCentralizedLayer):
         # Check the training model
         self._checkModel(modelTraining)
         # Run Predict
+        print(magentaStr(f"\n==> Prepare Data ==> Training step ==> Predict step"))
         protPredict, setofTomos = self._runIsonet2Predict(protPrepareData, modelTraining)
         # Check the tomograms
         self._checkSetOfTomos(setofTomos)
@@ -329,6 +329,7 @@ class TestIsonet2(TestBaseCentralizedLayer):
         # Check the refine model
         self._checkModel(modelRefine)
         #Run Predict
+        print(magentaStr(f"\n==> Prepare Data ==> Training step ==> Predict step ==> Make mask step ==> Refine step"))
         protPredict, setofTomos = self._runIsonet2Predict(protRefine, modelRefine)
         # Check the tomograms
         self._checkSetOfTomos(setofTomos)
