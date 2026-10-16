@@ -59,7 +59,7 @@ To check the installation, run the plugin tests. A complete list of tests can be
 Protocols
 -----------
 The plugin provides 5 protocols: **Prepare_Data**, **Training**, **Predict**, **Make_Mask** and **Refine**, and they
-operate on a ``.star`` text file which records their corresponding output paths.
+operate on a ``.star`` text file which records data paths and parameters.
 
 * **Prepare Data**: Prepares the first ``inTomograms.star`` file for the IsoNet2 pipeline from a set of tomograms with their even/odd halves, the tilt-series and the CTF estimation.
 It lists the tomograms halves paths and the acquisition metadata.
