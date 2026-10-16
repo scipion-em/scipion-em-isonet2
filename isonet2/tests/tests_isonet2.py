@@ -118,7 +118,7 @@ class TestIsonet2(TestBaseCentralizedLayer):
         protImportTs = cls.newProtocol(ProtImportTs,
                                        filesPath=cls.ds.getFile(DataSetEmd10491_Odd_Even.tsDir.value),
                                        filesPattern=DataSetEmd10491_Odd_Even.tsPattern.value,
-                                       #exclusionWords=DataSetEmd10491_Odd_Even.exclusionWordsTs32.value,
+                                       exclusionWords = DataSetEmd10491_Odd_Even.exclusionWordsOddEven.value,
                                        anglesFrom=0,  # From range
                                        minAngle=-34,
                                        maxAngle=46,

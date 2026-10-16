@@ -202,6 +202,7 @@ class ProtIsonet2Predict(ProtIsonet2Base):
                     tomo.copyInfo(inTomo)
                     # tomo.setTsId(tsId)
                     tomo.setFileName(tomoFile)
+                    tomo.setMRCSamplingRate()
                     outputSet.append(tomo)
                     break
 
