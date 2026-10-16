@@ -274,7 +274,7 @@ class TestIsonet2(TestBaseCentralizedLayer):
             -> Tuple[ProtIsonet2MakeMask, Optional[SetOfTomoMasks]]:
         print(magentaStr(f"\n==> Prepare Data ==> Training step ==> Predict step ==> Make mask step"))
         protMakeMask = self.newProtocol(ProtIsonet2MakeMask,
-                                        inProt=inProt)
+                                        predictProt=inProt)
         self.launchProtocol(protMakeMask)
         setofTomoMasks = getattr(protMakeMask, protMakeMask._possibleOutputs.masks.name, None)
         return protMakeMask, setofTomoMasks
@@ -290,7 +290,7 @@ class TestIsonet2(TestBaseCentralizedLayer):
             -> Tuple[ProtIsonet2Refine, Optional[Isonet2Model]]:
         print(magentaStr(f"\n==> Prepare Data ==> Training step ==> Predict step ==> Make mask step ==> Refine step"))
         protRefine = self.newProtocol(ProtIsonet2Refine,
-                                      inProt=inProt,
+                                      makeMaskProt=inProt,
                                       epochs=1,
                                       save_interval=1
                                       )
