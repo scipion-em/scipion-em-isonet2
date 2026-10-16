@@ -64,7 +64,7 @@ operate on a ``.star`` text file which records their corresponding output paths.
 * **Prepare Data**: Prepares the first ``inTomograms.star`` file for the IsoNet2 pipeline from a set of tomograms with their even/odd halves, the tilt-series and the CTF estimation.
 It lists the tomograms halves paths and the acquisition metadata.
 
-* **Training**: Noise-to-noise (n2n) training of the IsoNet2 network on the prepared data that can optionally include CTF correction.
+* **Training**: Noise-to-noise (n2n) training (denoising) of the IsoNet2 network on the prepared data that can optionally include CTF correction.
 A U-Net-based architecture network is trained to minimize the discrepancies between the two independent half-datasets derived from the even/odd halves.
 It provides a ``loss_full.png`` file that shows the model's learning progress over time during n2n training.
 
@@ -72,6 +72,7 @@ It provides a ``loss_full.png`` file that shows the model's learning progress ov
 The original ``inTomograms.star`` is updated with paths pointing to the denoised and/or missing-wedge corrected tomograms.
 
 * **Make mask**: Generates masks from the tomograms to restrict the training to exclude empty/unwanted areas of each tomogram.
+They're not necessary for denoising.
 The ``inTomograms.star`` is updated with a paths pointing to the missing-wedge masks.
 
 * **Refine**: Train the network to predict missing-wedge-corrected, CTF-corrected, and denoised tomograms.
