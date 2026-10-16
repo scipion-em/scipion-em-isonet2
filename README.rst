@@ -19,7 +19,7 @@ Scipion plugin for Isonet2
         :alt: Downloads
 
 This plugin provides a wrapper around the program
-`Isonet2 <https://github.com/IsoNet-cryoET/IsoNet2/tree/main#212b-predict>_`to use it within `Scipion <https://scipion-em.github.io/docs/release-3.0.0/index.html>`_ framework.
+`Isonet2 <https://github.com/IsoNet-cryoET/IsoNet2/tree/main#212b-predict>`_ to use it within `Scipion <https://scipion-em.github.io/docs/release-3.0.0/index.html>`_ framework.
 IsoNet2 uses deep learning to compensate for the missing wedge, CTF correction and to denoise cryo-electron tomograms, using the even/odd half tomograms (noise2noise).
 
 
