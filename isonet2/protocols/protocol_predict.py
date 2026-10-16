@@ -33,6 +33,7 @@ from os.path import exists
 from isonet2 import Plugin
 from isonet2.constants import PREPARE_DATA_PROT, TOMOGRAMS_STAR
 from isonet2.objects import Isonet2Model
+from isonet2.protocols import ProtIsonet2Training
 
 from isonet2.protocols.protocol_base import ProtIsonet2Base
 from pyworkflow import BETA
@@ -177,6 +178,11 @@ class ProtIsonet2Predict(ProtIsonet2Base):
 
         if self.isCTFflipped.get():
             cmd.append('--isCTFflipped')
+
+        if isinstance(self.inProt.get(), ProtIsonet2Training):
+            cmd.append(f'--output_prefix denoised')
+        else:
+            cmd.append(f'--output_prefix corrected')
 
         return ' '.join(cmd)
 
