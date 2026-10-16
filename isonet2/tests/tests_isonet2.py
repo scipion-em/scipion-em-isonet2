@@ -228,13 +228,15 @@ class TestIsonet2(TestBaseCentralizedLayer):
         starFile=protPrepareData.getTomoStarFile()
         self.assertTrue(os.path.exists(starFile), f'{starFile} was not generated')  # check if the star file exists
 
-    def _runIsonet2Training(self, inProt: ProtIsonet2PrepareData) \
+    def _runIsonet2Training(self, inProt: ProtIsonet2PrepareData, pretrained_choice: bool = False, model:Isonet2Model = None ) \
             -> Optional[Isonet2Model]:
         print(magentaStr(f"\n==> Prepare Data ==> Training step"))
         protTraining = self.newProtocol(ProtIsonet2Training,
                                         prepDataProt=inProt,
                                         epochs=1,
-                                        save_interval=1
+                                        save_interval=1,
+                                        pretrained_choice= pretrained_choice,
+                                        pretrained_model=model
                                         )
         self.launchProtocol(protTraining)
         modelName = f'{protTraining._possibleOutputs.model.name}_full' #use the final model
@@ -285,13 +287,15 @@ class TestIsonet2(TestBaseCentralizedLayer):
                             expectedSRate=self.sRate,
                             expectedDimensions=self.expectedTomoDims)
 
-    def _runIsonet2Refine(self, inProt: ProtIsonet2MakeMask) \
+    def _runIsonet2Refine(self, inProt: ProtIsonet2MakeMask, pretrained_choice: bool = False, model:Isonet2Model = None) \
             -> Tuple[ProtIsonet2Refine, Optional[Isonet2Model]]:
         print(magentaStr(f"\n==> Prepare Data ==> Training step ==> Predict step ==> Make mask step ==> Refine step"))
         protRefine = self.newProtocol(ProtIsonet2Refine,
                                       makeMaskProt=inProt,
                                       epochs=1,
-                                      save_interval=1
+                                      save_interval=1,
+                                      pretrained_choice=pretrained_choice,
+                                      pretrained_model=model
                                       )
         self.launchProtocol(protRefine)
         modelName = f'{protRefine._possibleOutputs.model.name}_full'
@@ -303,7 +307,8 @@ class TestIsonet2(TestBaseCentralizedLayer):
                         inCtfSet: SetOfCTFTomoSeries,
                         inTsSet: SetOfTiltSeries,
                         ctfSetMsg: str,
-                        tsSetMsg: str) -> None:
+                        tsSetMsg: str,
+                        pretrained_choice:bool = False) -> None:
         # Run Prepare Data
         protPrepareData = self._runIsonet2PrepareData(inCtfSet=inCtfSet,
                                                       inTsSet=inTsSet,
@@ -325,7 +330,12 @@ class TestIsonet2(TestBaseCentralizedLayer):
         # Check the masks
         self._checkSetOfMasks(setofTomoMasks)
         #Run Refine
-        protRefine, modelRefine = self._runIsonet2Refine(protMakeMask)
+        if pretrained_choice:
+            protRefine, modelRefine = self._runIsonet2Refine(protMakeMask,
+                                                             pretrained_choice=True,
+                                                             model=modelTraining)
+        else:
+            protRefine, modelRefine = self._runIsonet2Refine(protMakeMask)
         # Check the refine model
         self._checkModel(modelRefine)
         #Run Predict
@@ -377,6 +387,14 @@ class TestIsonet2(TestBaseCentralizedLayer):
     #                          inTsSet=importedTs,
     #                          ctfSetMsg=self.UNMODIFIED,
     #                          tsSetMsg=self.UNMODIFIED)
+
+    def testIsonet2_Refine_Pretrained(self):
+        importedTs, importedCtfs = self._runPreviousProtocols()
+        self._runTestIsonet2(inCtfSet=importedCtfs,
+                             inTsSet=importedTs,
+                             ctfSetMsg=self.UNMODIFIED,
+                             tsSetMsg=self.UNMODIFIED,
+                             pretrained_choice=True)
 
 
 
