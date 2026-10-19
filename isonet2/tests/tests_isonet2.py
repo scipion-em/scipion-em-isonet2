@@ -271,11 +271,12 @@ class TestIsonet2(TestBaseCentralizedLayer):
                             testSetAcqObj=acq,
                             testAcqObj=acq)
 
-    def _runIsonet2MakeMask(self, inProt: ProtIsonet2Predict) \
+    def _runIsonet2MakeMask(self, inProt: ProtIsonet2Predict, tomo_idx:str = 'All') \
             -> Tuple[ProtIsonet2MakeMask, Optional[SetOfTomoMasks]]:
         print(magentaStr(f"\n==> Prepare Data ==> Training step ==> Predict step ==> Make mask step"))
         protMakeMask = self.newProtocol(ProtIsonet2MakeMask,
-                                        predictProt=inProt)
+                                        predictProt=inProt,
+                                        tomo_idx=tomo_idx)
         self.launchProtocol(protMakeMask)
         setofTomoMasks = getattr(protMakeMask, protMakeMask._possibleOutputs.masks.name, None)
         return protMakeMask, setofTomoMasks
@@ -308,7 +309,8 @@ class TestIsonet2(TestBaseCentralizedLayer):
                         inTsSet: SetOfTiltSeries,
                         ctfSetMsg: str,
                         tsSetMsg: str,
-                        pretrained_choice:bool = False) -> None:
+                        pretrained_choice:bool = False,
+                        tomo_idx:str = 'All') -> None:
         # Run Prepare Data
         protPrepareData = self._runIsonet2PrepareData(inCtfSet=inCtfSet,
                                                       inTsSet=inTsSet,
@@ -326,7 +328,10 @@ class TestIsonet2(TestBaseCentralizedLayer):
         # Check the tomograms
         self._checkSetOfTomos(setofTomos)
         # Run MakeMask
-        protMakeMask, setofTomoMasks = self._runIsonet2MakeMask(protPredict)
+        if tomo_idx == 'All':
+            protMakeMask, setofTomoMasks = self._runIsonet2MakeMask(protPredict,tomo_idx='All')
+        else:
+            protMakeMask, setofTomoMasks = self._runIsonet2MakeMask(protPredict,tomo_idx='1')
         # Check the masks
         self._checkSetOfMasks(setofTomoMasks)
         #Run Refine
@@ -396,6 +401,16 @@ class TestIsonet2(TestBaseCentralizedLayer):
                              ctfSetMsg=self.UNMODIFIED,
                              tsSetMsg=self.UNMODIFIED,
                              pretrained_choice=True)
+
+    # Test using a subset of tomos to generate the masks in the Make_mask protocol
+    def testIsonet2_makeMaskSubset(self):
+        importedTs, importedCtfs = self._runPreviousProtocols()
+        self._runTestIsonet2(inCtfSet=importedCtfs,
+                             inTsSet=importedTs,
+                             ctfSetMsg=self.UNMODIFIED,
+                             tsSetMsg=self.UNMODIFIED,
+                             pretrained_choice=False,
+                             tomo_idx='1')
 
 
 
