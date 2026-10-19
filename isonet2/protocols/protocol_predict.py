@@ -99,7 +99,7 @@ class ProtIsonet2Predict(ProtIsonet2Base):
                       )
         form.addParam('tomo_idx', StringParam,
                       label='Tomogram index',
-                      allowsNull=True,
+                      default='All',
                       help='If set, process only the tomograms listed by these indices '
                            '(e.g., "1,2,4" or "5-10,15,16").'
                       )
@@ -173,9 +173,13 @@ class ProtIsonet2Predict(ProtIsonet2Base):
             f'--model {modelPath}',
             f'--output_dir {output_dir}',
             f'--gpuID [{gpu}]',
-            f'--padding_factor {self.padding_factor.get()}',
-            f'--tomo_idx {self.tomo_idx.get()}'
+            f'--padding_factor {self.padding_factor.get()}'
         ]
+
+        if self.tomo_idx.get() == 'All':
+            cmd.append(f'--tomo_idx None')
+        else:
+            cmd.append(f'--tomo_idx {self.tomo_idx.get()}')
 
         if self.missingWedge_mask.get():
             cmd.append('--apply_mw_x1')
