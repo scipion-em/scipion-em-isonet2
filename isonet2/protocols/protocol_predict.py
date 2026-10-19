@@ -176,9 +176,9 @@ class ProtIsonet2Predict(ProtIsonet2Base):
             f'--padding_factor {self.padding_factor.get()}'
         ]
 
-        tomoIdx = self.tomo_idx.get()
-        if tomoIdx:
-            cmd.append(f'--tomo_idx {tomoIdx}')
+        # tomoIdx = self.tomo_idx.get()
+        # if tomoIdx:
+        #     cmd.append(f'--tomo_idx {tomoIdx}')
 
         if self.missingWedge_mask.get():
             cmd.append('--apply_mw_x1')

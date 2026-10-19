@@ -165,12 +165,13 @@ class TestIsonet2(TestBaseCentralizedLayer):
     def _runImportTomoMasks(cls, importedTomo: SetOfTomograms) -> SetOfTomoMasks:
         print(magentaStr(f"\n==> Importing a set of tomoMasks:"))
         protImportTomomasks = cls.newProtocol(ProtImportTomomasks,
-                                              filesPath=filesPath,
-                                              filesPattern=filesPattern,
+                                              filesPath=cls.ds.getFile(DataSetEmd10491_Odd_Even.masksDir.value),
+                                              filesPattern=DataSetEmd10491_Odd_Even.pattern.value,
                                               samplingRate=cls.sRate,
                                               inputTomos=importedTomo)
         cls.launchProtocol(protImportTomomasks)
-        return getattr(protImportSetOfTomoMasks, ProtImportTomomasks._possibleOutputs.tomomasks.name, None)
+        setOfTomoMasks = getattr(protImportTomomasks, ProtImportTomomasks._possibleOutputs.tomomasks.name, None)
+        return setOfTomoMasks
 
     @classmethod
     def _runExcludeViewsProt(cls,
