@@ -279,13 +279,17 @@ class ProtIsonet2Training(ProtIsonet2Base):
         tomoStarFile = self._getTomosStarName()
         self.setTomoSStarFile(tomoStarFile)
 
+        protPrepare = self._getFormAttrib(PREPARE_DATA_PROT)
+
         modelFiles = sorted(glob.glob(self._getExtraPath('*_full.pt')), reverse=True)
         for modelFile in modelFiles:
             model = Isonet2Model(model_file=modelFile)
             modelEpoch = removeBaseExt(modelFile).replace(
                 f'network_n2n_{ARCH_CHOICES[self.arch.get()]}_{self.cube_size.get()}_', '')
             self._defineOutputs(**{Outputobjects.model.name + f'_{modelEpoch}': model})
-
+            self._defineSourceRelation(protPrepare.inTomos, model)
+            if self.pretrained_choice.get():
+                self._defineSourceRelation(self.pretrained_model, model)
         self._store()
 
 

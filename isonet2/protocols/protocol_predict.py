@@ -148,8 +148,12 @@ class ProtIsonet2Predict(ProtIsonet2Base):
         self._store()
 
         self._defineOutputs(**{self._possibleOutputs.tomograms.name: outTomoSet})
-        #vedi
-        #self._defineSourceRelation(self._getFormAttrib(PREPARE_DATA_PROT), outTomoSet)
+
+        inProt = self._getFormAttrib('inProt')
+        self._defineSourceRelation(inProt.getTomoSet(), outTomoSet)
+        self._defineSourceRelation(self.model,outTomoSet)
+
+
 
     # -------------------------- UTILS functions ------------------------------
     def _getModelPath(self, model: Isonet2Model) -> str:

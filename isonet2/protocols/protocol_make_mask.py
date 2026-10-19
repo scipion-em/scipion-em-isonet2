@@ -143,8 +143,9 @@ class ProtIsonet2MakeMask(ProtIsonet2Base):
 
         self._store()
 
+        protPredict = self._getFormAttrib(PREDICT_PROT)
         self._defineOutputs(**{self._possibleOutputs.masks.name: outTomoMasks})
-        self._defineSourceRelation(self._getFormAttrib(PREDICT_PROT), outTomoMasks)
+        self._defineSourceRelation(protPredict.tomograms , outTomoMasks)
 
 
     def _generateArguments(self) -> str:
@@ -191,6 +192,7 @@ class ProtIsonet2MakeMask(ProtIsonet2Base):
                     mask = TomoMask()
                     mask.copyInfo(tomo)
                     mask.setFileName(tomoFile)
+                    mask.setMRCSamplingRate()
                     outTomoMasks.append(mask)
                     break
 

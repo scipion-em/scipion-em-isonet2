@@ -388,6 +388,7 @@ class TestIsonet2(TestBaseCentralizedLayer):
     #                          ctfSetMsg=self.UNMODIFIED,
     #                          tsSetMsg=self.UNMODIFIED)
 
+    # Test using a pre-trained model in the Refine step
     def testIsonet2_Refine_Pretrained(self):
         importedTs, importedCtfs = self._runPreviousProtocols()
         self._runTestIsonet2(inCtfSet=importedCtfs,
@@ -395,6 +396,8 @@ class TestIsonet2(TestBaseCentralizedLayer):
                              ctfSetMsg=self.UNMODIFIED,
                              tsSetMsg=self.UNMODIFIED,
                              pretrained_choice=True)
+
+
 
 
 

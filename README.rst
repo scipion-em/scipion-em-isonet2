@@ -30,7 +30,7 @@ You will need to use `3.0 <https://scipion-em.github.io/docs/release-3.0.0/docs/
 version of Scipion to run these protocols. To install the plugin, you have two options:
 
 
-a) Stable version (not available yet):
+a) Stable version:
 
 .. code-block::
 
@@ -73,10 +73,10 @@ The original ``inTomograms.star`` is updated with paths pointing to the denoised
 
 * **Make mask**: Generates masks from the tomograms to restrict the training to exclude empty/unwanted areas of each tomogram.
 They're not necessary for denoising.
-The ``inTomograms.star`` is updated with a paths pointing to the missing-wedge masks.
+The ``inTomograms.star`` is updated with a path pointing to the missing-wedge masks.
 
 * **Refine**: Train the network to predict missing-wedge-corrected, CTF-corrected, and denoised tomograms.
-It provides a ``loss_full.png`` file that shows the model's learning progress over time during training both in terms of n2n training and missing-wedge correction.
+It provides a ``loss_full.png`` file that shows the model's learning progress over time, both in terms of n2n training and missing-wedge correction.
 
 **Training**, **Predict** and **Refine** requires GPU acceleration.
 
