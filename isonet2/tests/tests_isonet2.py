@@ -330,10 +330,12 @@ class TestIsonet2(TestBaseCentralizedLayer):
         # Run MakeMask
         if tomo_idx == 'All':
             protMakeMask, setofTomoMasks = self._runIsonet2MakeMask(protPredict,tomo_idx='All')
+            # Check the masks
+            self._checkSetOfMasks(setofTomoMasks)
         else:
             protMakeMask, setofTomoMasks = self._runIsonet2MakeMask(protPredict,tomo_idx='1')
-        # Check the masks
-        self._checkSetOfMasks(setofTomoMasks)
+            # Check the masks
+            self._checkSetOfMasks(setofTomoMasks,expectedSize=1)
         #Run Refine
         if pretrained_choice:
             protRefine, modelRefine = self._runIsonet2Refine(protMakeMask,
