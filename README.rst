@@ -116,11 +116,11 @@ Notes for the Scipion plugin
   * ``network``: the network input is multiplied by the CTF, so that the network learns to
     compensate for it, analogous to the missing-wedge correction.
   * ``wiener``: a Wiener filter is applied to the network target. Only in this mode the
-    ``SNR falloff``,``Deconvolution strength`` and ``Highpass Nyquist`` parameters have an effect.
+    ``SNR falloff``, ``Deconvolution strength`` and ``Highpass Nyquist`` parameters have an effect.
 
 * Training of at least 50 epochs is recommended.
 * Memory usage during training/refine can be reduce by: enabling mixed_precision for float16, reducing batch_size, choosing a smaller network architecture and reducing the cube_size
-
+* In the **Refine** protocol, missing wedge reconstruction can be prioritized over denoising by setting higher values of `Missing wedge loss weight`.
 
 Latest plugin versions
 ----------------------
