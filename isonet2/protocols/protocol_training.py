@@ -80,7 +80,7 @@ class ProtIsonet2Training(ProtIsonet2Base):
                       condition='pretrained_choice',
                       )
 
-        form.addSection(label='CTF Mode')
+        form.addSection(label='CTF Correction')
         form.addParam('ctf_mode', EnumParam,
                       label='CTF mode',
                       choices=['None', 'phase_only', 'wiener', 'network'],
@@ -90,7 +90,7 @@ class ProtIsonet2Training(ProtIsonet2Base):
                       help='CTF handling mode: "None", "phase_only", "wiener", or "network". '
                            '"None": No CTF correction. '
                            '"phase_only": Phase-only correction. '
-                           '"wiener":Applier Wiener filter to network target.'
+                           '"wiener":Applies Wiener filter to network target.'
                            '"network": Applies CTF-shaped filter to network input. '
                       )
         form.addParam('isCTFflipped', BooleanParam,

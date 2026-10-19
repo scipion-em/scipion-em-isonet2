@@ -50,48 +50,77 @@ b) Developer's version
 
         scipion3 installp -p /path/to/scipion-em-isonet2 --devel
 
+To check the installation, simply run the following Scipion test for the plugin:
+
+    .. code-block::
+
+        scipion3 tests isonet2.tests.tests_isonet2.TestIsonet2
+
 To check the installation, run the plugin tests. A complete list of tests can be displayed by executing
 
 .. code-block::
 
     scipion3 tests --grep isonet2 --show
 
+
 Protocols
 -----------
-The plugin provides 5 protocols: **Prepare_Data**, **Training**, **Predict**, **Make_Mask** and **Refine**, and they
+
+The plugin provides 5 protocols: **prepare data**, **training**, **predict**, **make mask** and **refine**, and they
 operate on a ``.star`` text file which records data paths and parameters.
 
-* **Prepare Data**: Prepares the first ``inTomograms.star`` file for the IsoNet2 pipeline from a set of tomograms with their even/odd halves, the tilt-series and the CTF estimation.
-It lists the tomograms halves paths and the acquisition metadata.
+* **Prepare data**: Prepares the first ``inTomograms.star`` file for the IsoNet2 pipeline from a set of tomograms with their even/odd halves, the tilt-series and the CTF estimation.
+  It lists the tomogram halves paths and the acquisition metadata.
 
 * **Training**: Noise-to-noise (n2n) training (denoising) of the IsoNet2 network on the prepared data that can optionally include CTF correction.
-A U-Net-based architecture network is trained to minimize the discrepancies between the two independent half-datasets derived from the even/odd halves.
-It provides a ``loss_full.png`` file that shows the model's learning progress over time during n2n training.
+  A U-Net-based architecture network is trained to minimize the discrepancies between the two independent half-datasets derived from the even/odd halves.
+  It provides a ``loss_full.png`` file that shows the model's learning progress over time during n2n training.
 
-* **Predict**: Applies a trained model to the tomograms, producing denoised tomograms and/or missing-wedge corrected.
-The original ``inTomograms.star`` is updated with paths pointing to the denoised and/or missing-wedge corrected tomograms.
+* **Predict**: Applies a trained model to the tomograms, producing denoised and/or missing-wedge corrected tomograms.
+  The original ``inTomograms.star`` is updated with paths pointing to the denoised and/or missing-wedge corrected tomograms.
 
 * **Make mask**: Generates masks from the tomograms to restrict the training to exclude empty/unwanted areas of each tomogram.
-They're not necessary for denoising.
-The ``inTomograms.star`` is updated with a path pointing to the missing-wedge masks.
+  They're not necessary for denoising.
+  The ``inTomograms.star`` is updated with a path pointing to the masks.
 
-* **Refine**: Train the network to predict missing-wedge-corrected, CTF-corrected, and denoised tomograms.
-It provides a ``loss_full.png`` file that shows the model's learning progress over time, both in terms of n2n training and missing-wedge correction.
+* **Refine**: Trains the network to predict missing-wedge-corrected, CTF-corrected, and denoised tomograms.
+  It provides a ``loss_full.png`` file that shows the model's learning progress over time, both in terms of n2n training and missing-wedge correction.
 
-**Training**, **Predict** and **Refine** requires GPU acceleration.
+**Training**, **Predict** and **Refine** require GPU acceleration.
+
 
 Pipeline
 -----------
-* The following pipeline produces denoised tomograms:
-**Prepare Data** -> **Training** -> **Predict**
 
-The trained network model, saved as a ``.pt`` file, can be applied to the original tomograms or similar tomograms.
+* The following pipeline produces denoised tomograms:
+**Prepare Data** → **Training** → **Predict**
+
+  The trained network model, saved as a ``.pt`` file, can be applied to the original tomograms or similar tomograms.
 
 * The following pipeline produces missing-wedge corrected and denoised tomograms:
-**Prepare Data** -> **Training** -> **Predict** -> **Make mask** -> **Refine** -> **Predict**
+**Prepare Data** → **Training** → **Predict** → **Make mask** → **Refine** → **Predict**
 
-Make_mask is an optional step to mask unwanted regions from the denoised tomograms. The refine network model, saved as
-a ``.pt`` file, can be applied to the original tomograms or similar tomograms.
+  Make mask is an optional step to mask unwanted regions from the denoised tomograms. The refine network model, saved as
+  a ``.pt`` file, can be applied to the original tomograms or similar tomograms.
+
+
+Notes for the Scipion plugin
+-----------
+
+* CTF correction
+  IsoNet2 corrects the CTF within the network training. The correction is controlled by the ``CTF mode`` parameter, available in the
+  **Training** and **Refine** protocols:
+
+  * ``None``: no CTF correction (IsoNet2 default).
+  * ``phase_only``: phase-only correction.
+  * ``network``: the network input is multiplied by the CTF, so that the network learns to
+    compensate for it, analogous to the missing-wedge correction.
+  * ``wiener``: a Wiener filter is applied to the network target. Only in this mode the
+    ``SNR falloff``,``Deconvolution strength`` and ``Highpass Nyquist`` parameters have an effect.
+
+* Training of at least 50 epochs is recommended.
+* Memory usage during training/refine can be reduce by: enabling mixed_precision for float16, reducing batch_size, choosing a smaller network architecture and reducing the cube_size
+
 
 Latest plugin versions
 ----------------------
