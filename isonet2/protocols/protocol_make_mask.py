@@ -69,7 +69,7 @@ class ProtIsonet2MakeMask(ProtIsonet2Base):
                       )
         form.addParam('tomo_idx', StringParam,
                       label='Tomogram index',
-                      default='All',
+                      allowsNull=True,
                       help='If set, process only the tomograms listed by these indices '
                            '(e.g., "1,2,4" or "5-10,15,16").'
                       )
@@ -160,15 +160,16 @@ class ProtIsonet2MakeMask(ProtIsonet2Base):
             f'--patch_size {self.patch_size.get()}',
             f'--density_percentage {self.density_percentage.get()}',
             f'--std_percentage {self.std_percentage.get()}',
-            f'--z_crop {self.z_crop.get()}'
+            f'--z_crop {self.z_crop.get()}',
+            f'--tomo_idx {self.tomo_idx.get()}'
 
 
         ]
 
-        if self.tomo_idx.get() == 'All':
-            cmd.append(f'--tomo_idx None')
-        else:
-            cmd.append(f'--tomo_idx {self.tomo_idx.get()}')
+        # if self.tomo_idx.get() == 'All':
+        #     cmd.append(f'--tomo_idx None')
+        # else:
+        #     cmd.append(f'--tomo_idx {self.tomo_idx.get()}')
 
         return ' '.join(cmd)
 
