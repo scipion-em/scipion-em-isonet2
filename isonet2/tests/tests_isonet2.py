@@ -71,7 +71,7 @@ class TestIsonet2(TestBaseCentralizedLayer):
         cls.sRate = 3.16
 
     @classmethod
-    def _runPreviousProtocols(cls, eVCtf: bool = False, eVTs: bool = False, tomoMasks: bool = False) \
+    def _runPreviousProtocols(cls, eVCtf: bool = False, eVTs: bool = False, importTomoMasks: bool = False) \
             -> Tuple[SetOfTiltSeries, SetOfCTFTomoSeries]:
         print(cyanStr('--------------------------------- RUNNING PREVIOUS PROTOCOLS ---------------------------------'))
         importedTs = cls._runImportTs()
@@ -82,8 +82,8 @@ class TestIsonet2(TestBaseCentralizedLayer):
             cls._excludeSetViews(importedCtfs, excludedViewsDict=cls.ctfExcludedViewsDict)
         cls.tomosOddEven = cls._runImportTomograms()
         cls.setOfInputTomoMasks = None
-        # if tomoMasks:
-        #     cls.setOfInputTomoMasks = cls._runImportTomoMasks(cls.tomosOddEven)
+        if importTomoMasks:
+            cls.setOfInputTomoMasks = cls._runImportTomoMasks(cls.tomosOddEven)
         print(
             cyanStr('\n-------------------------------- PREVIOUS PROTOCOLS FINISHED ---------------------------------'))
         return importedTs, importedCtfs
@@ -392,12 +392,13 @@ class TestIsonet2(TestBaseCentralizedLayer):
                              ctfSetMsg=self.UNMODIFIED,
                              tsSetMsg=self.EXC_VIEWS)
 
-    # def testIsonet2_TomoMasks(self):
-    #     importedTs, importedCtfs = self._runPreviousProtocols(tomoMasks=True)
-    #     self._runTestIsonet2(inCtfSet=importedCtfs,
-    #                          inTsSet=importedTs,
-    #                          ctfSetMsg=self.UNMODIFIED,
-    #                          tsSetMsg=self.UNMODIFIED)
+    # Test using a set of Tomo Masks as one of the inputs of prepare_data
+    def testIsonet2_TomoMasks(self):
+        importedTs, importedCtfs = self._runPreviousProtocols(importTomoMasks=True)
+        self._runTestIsonet2(inCtfSet=importedCtfs,
+                             inTsSet=importedTs,
+                             ctfSetMsg=self.UNMODIFIED,
+                             tsSetMsg=self.UNMODIFIED)
 
     # Test using a pre-trained model in the Refine step
     def testIsonet2_Refine_Pretrained(self):
