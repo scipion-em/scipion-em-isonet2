@@ -161,15 +161,12 @@ class ProtIsonet2MakeMask(ProtIsonet2Base):
             f'--density_percentage {self.density_percentage.get()}',
             f'--std_percentage {self.std_percentage.get()}',
             f'--z_crop {self.z_crop.get()}',
-            f'--tomo_idx {self.tomo_idx.get()}'
-
 
         ]
 
-        # if self.tomo_idx.get() == 'All':
-        #     cmd.append(f'--tomo_idx None')
-        # else:
-        #     cmd.append(f'--tomo_idx {self.tomo_idx.get()}')
+        tomoIdx = self.tomo_idx.get()
+        if tomoIdx:
+            cmd.append(f'--tomo_idx {tomoIdx}')
 
         return ' '.join(cmd)
 
