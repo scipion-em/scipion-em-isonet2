@@ -48,6 +48,7 @@ from tomo.tests.test_base_centralized_layer import TestBaseCentralizedLayer
 TS_1 = 'TS_1'
 TS_32 = 'TS_32'
 
+
 class TestIsonet2(TestBaseCentralizedLayer):
     nTomos = 2
     expectedTomoDims = [1024, 1440, 300]
@@ -70,7 +71,7 @@ class TestIsonet2(TestBaseCentralizedLayer):
         cls.sRate = 3.16
 
     @classmethod
-    def _runPreviousProtocols(cls, eVCtf: bool = False, eVTs: bool = False, tomoMasks:bool=False) \
+    def _runPreviousProtocols(cls, eVCtf: bool = False, eVTs: bool = False, tomoMasks: bool = False) \
             -> Tuple[SetOfTiltSeries, SetOfCTFTomoSeries]:
         print(cyanStr('--------------------------------- RUNNING PREVIOUS PROTOCOLS ---------------------------------'))
         importedTs = cls._runImportTs()
@@ -118,7 +119,7 @@ class TestIsonet2(TestBaseCentralizedLayer):
         protImportTs = cls.newProtocol(ProtImportTs,
                                        filesPath=cls.ds.getFile(DataSetEmd10491_Odd_Even.tsDir.value),
                                        filesPattern=DataSetEmd10491_Odd_Even.tsPattern.value,
-                                       exclusionWords = '_even.mrcs _odd.mrcs',
+                                       exclusionWords='_even.mrcs _odd.mrcs',
                                        anglesFrom=0,  # From range
                                        minAngle=-34,
                                        maxAngle=46,
@@ -160,16 +161,16 @@ class TestIsonet2(TestBaseCentralizedLayer):
         tomoOddEven = getattr(protImportTomos, OUTPUT_NAME, None)
         return tomoOddEven
 
-    # @classmethod
-    # def _runImportTomoMasks(cls,importedTomo: SetOfTomograms)->SetOfTomoMasks:
-    #     print(magentaStr(f"\n==> Importing a set of tomoMasks:"))
-    #     protImportTomomasks = cls.newProtocol(ProtImportTomomasks,
-    #                                           filesPath=filesPath,
-    #                                           filesPattern=filesPattern,
-    #                                           samplingRate=cls.sRate,
-    #                                           inputTomos=importedTomo)
-    #     cls.launchProtocol(protImportTomomasks)
-    #     return getattr(protImportSetOfTomoMasks, ProtImportTomomasks._possibleOutputs.tomomasks.name, None)
+    @classmethod
+    def _runImportTomoMasks(cls, importedTomo: SetOfTomograms) -> SetOfTomoMasks:
+        print(magentaStr(f"\n==> Importing a set of tomoMasks:"))
+        protImportTomomasks = cls.newProtocol(ProtImportTomomasks,
+                                              filesPath=filesPath,
+                                              filesPattern=filesPattern,
+                                              samplingRate=cls.sRate,
+                                              inputTomos=importedTomo)
+        cls.launchProtocol(protImportTomomasks)
+        return getattr(protImportSetOfTomoMasks, ProtImportTomomasks._possibleOutputs.tomomasks.name, None)
 
     @classmethod
     def _runExcludeViewsProt(cls,
@@ -225,29 +226,30 @@ class TestIsonet2(TestBaseCentralizedLayer):
         return protPrepareData
 
     def _checkStar(self, protPrepareData: ProtIsonet2PrepareData) -> None:
-        starFile=protPrepareData.getTomoStarFile()
+        starFile = protPrepareData.getTomoStarFile()
         self.assertTrue(os.path.exists(starFile), f'{starFile} was not generated')  # check if the star file exists
 
-    def _runIsonet2Training(self, inProt: ProtIsonet2PrepareData, pretrained_choice: bool = False, model:Isonet2Model = None ) \
+    def _runIsonet2Training(self, inProt: ProtIsonet2PrepareData, pretrained_choice: bool = False,
+                            model: Isonet2Model = None) \
             -> Optional[Isonet2Model]:
         print(magentaStr(f"\n==> Prepare Data ==> Training step"))
         protTraining = self.newProtocol(ProtIsonet2Training,
                                         prepDataProt=inProt,
                                         epochs=1,
                                         save_interval=1,
-                                        pretrained_choice= pretrained_choice,
+                                        pretrained_choice=pretrained_choice,
                                         pretrained_model=model
                                         )
         self.launchProtocol(protTraining)
-        modelName = f'{protTraining._possibleOutputs.model.name}_full' #use the final model
+        modelName = f'{protTraining._possibleOutputs.model.name}_full'  # use the final model
         modelTraining = getattr(protTraining, modelName, None)
         return modelTraining
 
-    def _checkModel(self, model:Isonet2Model) -> None:
+    def _checkModel(self, model: Isonet2Model) -> None:
         # Check the Model
-        self.assertIsNotNone(model, 'The training did not produce the final model') #check if the output exists
-        modelPath=model.getPath()
-        self.assertTrue(os.path.exists(modelPath),f'{modelPath} does not exist') #check if the file exists
+        self.assertIsNotNone(model, 'The training did not produce the final model')  # check if the output exists
+        modelPath = model.getPath()
+        self.assertTrue(os.path.exists(modelPath), f'{modelPath} does not exist')  # check if the file exists
 
     def _runIsonet2Predict(self, inProt: Union[ProtIsonet2PrepareData, ProtIsonet2Refine], model: Isonet2Model) \
             -> Tuple[ProtIsonet2Predict, Optional[SetOfTomograms]]:
@@ -259,7 +261,7 @@ class TestIsonet2(TestBaseCentralizedLayer):
         setofTomos = getattr(protPredict, protPredict._possibleOutputs.tomograms.name, None)
         return protPredict, setofTomos
 
-    def _checkSetOfTomos(self, setOfTomos: SetOfTomograms, expectedSize:int=2) -> None:
+    def _checkSetOfTomos(self, setOfTomos: SetOfTomograms, expectedSize: int = 2) -> None:
         # Check the Tomograms
         acq = DataSetEmd10491_Odd_Even.acq.value
         self.checkTomograms(inTomoSet=setOfTomos,
@@ -271,7 +273,7 @@ class TestIsonet2(TestBaseCentralizedLayer):
                             testSetAcqObj=acq,
                             testAcqObj=acq)
 
-    def _runIsonet2MakeMask(self, inProt: ProtIsonet2Predict, tomo_idx:str = 'All') \
+    def _runIsonet2MakeMask(self, inProt: ProtIsonet2Predict, tomo_idx: str = 'None') \
             -> Tuple[ProtIsonet2MakeMask, Optional[SetOfTomoMasks]]:
         print(magentaStr(f"\n==> Prepare Data ==> Training step ==> Predict step ==> Make mask step"))
         protMakeMask = self.newProtocol(ProtIsonet2MakeMask,
@@ -281,14 +283,15 @@ class TestIsonet2(TestBaseCentralizedLayer):
         setofTomoMasks = getattr(protMakeMask, protMakeMask._possibleOutputs.masks.name, None)
         return protMakeMask, setofTomoMasks
 
-    def _checkSetOfMasks(self, setofTomoMasks: SetOfTomoMasks,expectedSize:int=2) -> None:
+    def _checkSetOfMasks(self, setofTomoMasks: SetOfTomoMasks, expectedSize: int = 2) -> None:
         # Check the set of tomoMask generated by ProtIsonet2MakeMask
         self.checkTomoMasks(inTomoMasks=setofTomoMasks,
                             expectedSetSize=expectedSize,
                             expectedSRate=self.sRate,
                             expectedDimensions=self.expectedTomoDims)
 
-    def _runIsonet2Refine(self, inProt: ProtIsonet2MakeMask, pretrained_choice: bool = False, model:Isonet2Model = None) \
+    def _runIsonet2Refine(self, inProt: ProtIsonet2MakeMask, pretrained_choice: bool = False,
+                          model: Isonet2Model = None) \
             -> Tuple[ProtIsonet2Refine, Optional[Isonet2Model]]:
         print(magentaStr(f"\n==> Prepare Data ==> Training step ==> Predict step ==> Make mask step ==> Refine step"))
         protRefine = self.newProtocol(ProtIsonet2Refine,
@@ -309,8 +312,8 @@ class TestIsonet2(TestBaseCentralizedLayer):
                         inTsSet: SetOfTiltSeries,
                         ctfSetMsg: str,
                         tsSetMsg: str,
-                        pretrained_choice:bool = False,
-                        tomo_idx:str = 'All') -> None:
+                        pretrained_choice: bool = False,
+                        tomo_idx: str = 'None') -> None:
         # Run Prepare Data
         protPrepareData = self._runIsonet2PrepareData(inCtfSet=inCtfSet,
                                                       inTsSet=inTsSet,
@@ -328,15 +331,15 @@ class TestIsonet2(TestBaseCentralizedLayer):
         # Check the tomograms
         self._checkSetOfTomos(setofTomos)
         # Run MakeMask
-        if tomo_idx == 'All':
-            protMakeMask, setofTomoMasks = self._runIsonet2MakeMask(protPredict,tomo_idx='All')
+        if tomo_idx == 'None':
+            protMakeMask, setofTomoMasks = self._runIsonet2MakeMask(protPredict, tomo_idx='None')
             # Check the masks
             self._checkSetOfMasks(setofTomoMasks)
         else:
-            protMakeMask, setofTomoMasks = self._runIsonet2MakeMask(protPredict,tomo_idx='1')
+            protMakeMask, setofTomoMasks = self._runIsonet2MakeMask(protPredict, tomo_idx='1')
             # Check the masks
-            self._checkSetOfMasks(setofTomoMasks,expectedSize=1)
-        #Run Refine
+            self._checkSetOfMasks(setofTomoMasks, expectedSize=1)
+        # Run Refine
         if pretrained_choice:
             protRefine, modelRefine = self._runIsonet2Refine(protMakeMask,
                                                              pretrained_choice=True,
@@ -345,7 +348,7 @@ class TestIsonet2(TestBaseCentralizedLayer):
             protRefine, modelRefine = self._runIsonet2Refine(protMakeMask)
         # Check the refine model
         self._checkModel(modelRefine)
-        #Run Predict
+        # Run Predict
         print(magentaStr(f"\n==> Prepare Data ==> Training step ==> Predict step ==> Make mask step ==> Refine step"))
         protPredict, setofTomos = self._runIsonet2Predict(protRefine, modelRefine)
         # Check the tomograms
@@ -413,13 +416,3 @@ class TestIsonet2(TestBaseCentralizedLayer):
                              tsSetMsg=self.UNMODIFIED,
                              pretrained_choice=False,
                              tomo_idx='1')
-
-
-
-
-
-
-
-
-
-
