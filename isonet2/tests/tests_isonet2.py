@@ -392,7 +392,7 @@ class TestIsonet2(TestBaseCentralizedLayer):
                              ctfSetMsg=self.UNMODIFIED,
                              tsSetMsg=self.EXC_VIEWS)
 
-    # Test using a set of Tomo Masks as one of the inputs of prepare_data
+    # Test using a set of Tomo Masks as one of the inputs of prepare data
     def testIsonet2_TomoMasks(self):
         importedTs, importedCtfs = self._runPreviousProtocols(importTomoMasks=True)
         self._runTestIsonet2(inCtfSet=importedCtfs,
@@ -416,5 +416,4 @@ class TestIsonet2(TestBaseCentralizedLayer):
                              inTsSet=importedTs,
                              ctfSetMsg=self.UNMODIFIED,
                              tsSetMsg=self.UNMODIFIED,
-                             pretrained_choice=False,
                              tomo_idx='1')
