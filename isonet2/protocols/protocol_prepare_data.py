@@ -120,7 +120,7 @@ class ProtIsonet2PrepareData(ProtIsonet2Base):
 
             self.tsDict, self.tomoDict, self.ctfDict = (
                 getTsIdsDicts(tsSet, tomoSet, ctfSet, present_ts_ids=presentTsIds))
-            self.makeDirs()
+        self.makeDirs()
 
     def convertInputStep(self, tsId: str):
         logger.info(cyanStr(f'tsId = {tsId}: converting the inputs...'))
