@@ -125,7 +125,7 @@ class ProtIsonet2PrepareData(ProtIsonet2Base):
     def convertInputStep(self, tsId: str):
         logger.info(cyanStr(f'tsId = {tsId}: converting the inputs...'))
 
-        masksDir = self._getTmpPath('masks')
+        masksDir = self._getExtraPath('masks')
         makePath(masksDir)
 
         try:
