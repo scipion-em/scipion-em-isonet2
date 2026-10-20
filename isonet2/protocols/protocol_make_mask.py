@@ -175,23 +175,27 @@ class ProtIsonet2MakeMask(ProtIsonet2Base):
 
 
     def _createOutputSet(self) -> SetOfTomoMasks:
-        outTomoMasks = SetOfTomoMasks.create(self._getPath(), template='tomomasks%s.sqlite')
+        maskFiles = sorted(glob.glob(self._getExtraPath('*_mask.mrc')))
+        if not maskFiles:
+            raise Exception('No masks were generated. Check the output log for more details.')
 
-        tomoFiles = sorted(glob.glob(self._getExtraPath('*_mask.mrc')))
         protPredict = self._getFormAttrib(PREDICT_PROT)
-
         tomoSetIn = protPredict.tomograms
+
+        outTomoMasks = SetOfTomoMasks.create(self._getPath(), template='tomomasks%s.sqlite')
         outTomoMasks.copyInfo(tomoSetIn)
 
         for tomo in tomoSetIn:
             tsId = tomo.getTsId()
-            for tomoFile in tomoFiles:
-                if f'_{tsId}_' in tomoFile:
+            for maskFile in maskFiles:
+                if f'_{tsId}_' in maskFile:
                     mask = TomoMask()
                     mask.copyInfo(tomo)
-                    mask.setFileName(tomoFile)
+                    mask.setFileName(maskFile)
                     mask.setMRCSamplingRate()
                     outTomoMasks.append(mask)
                     break
+        if outTomoMasks.getSize() == 0:
+            raise Exception('None of the generated masks could be matched to the input tomograms.')
 
         return outTomoMasks
