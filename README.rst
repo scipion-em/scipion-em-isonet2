@@ -69,7 +69,7 @@ Protocols
 The plugin provides 5 protocols: **prepare data**, **training**, **predict**, **make mask** and **refine**, and they
 operate on a ``.star`` text file which records data paths and parameters.
 
-* **Prepare data**: Prepares the first ``inTomograms.star`` file for the IsoNet2 pipeline from a set of tomograms with their even/odd halves, the tilt-series and the CTF estimation.
+* **Prepare data**: Prepares the first ``inTomograms.star`` file for the IsoNet2 pipeline from a set of tomograms with their even/odd halves (e.g. using the ``tomo - import tomograms protocol`` with the ``Import even/odd halves?`` advanced parameter enabled) , the tilt-series and the CTF estimation.
   It lists the tomogram halves paths and the acquisition metadata.
 
 * **Training**: Noise-to-noise (n2n) training (denoising) of the IsoNet2 network on the prepared data that can optionally include CTF correction.
@@ -93,14 +93,14 @@ Pipeline
 -----------
 
 * The following pipeline produces denoised tomograms:
-**Prepare Data** → **Training** → **Predict**
+  **Prepare Data** → **Training** → **Predict**
 
   The trained network model, saved as a ``.pt`` file, can be applied to the original tomograms or similar tomograms.
 
 * The following pipeline produces missing-wedge corrected and denoised tomograms:
-**Prepare Data** → **Training** → **Predict** → **Make mask** → **Refine** → **Predict**
+  **Prepare Data** → **Training** → **Predict** → **Make mask** → **Refine** → **Predict**
 
-  Make mask is an optional step to mask unwanted regions from the denoised tomograms. The refine network model, saved as
+  Make mask is a step to mask unwanted regions from the denoised tomograms. The refine network model, saved as
   a ``.pt`` file, can be applied to the original tomograms or similar tomograms.
 
 
