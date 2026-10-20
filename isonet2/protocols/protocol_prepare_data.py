@@ -105,7 +105,6 @@ class ProtIsonet2PrepareData(ProtIsonet2Base):
 
     # -------------------------- STEPS functions ------------------------------
     def _initialize(self):
-        self.makeDirs()
         tsSet = self._getFormAttrib(IN_TS_SET)
         tomoSet = self._getFormAttrib(IN_TOMOS)
         ctfSet = self._getFormAttrib(IN_CTF_SET)
@@ -121,6 +120,7 @@ class ProtIsonet2PrepareData(ProtIsonet2Base):
 
             self.tsDict, self.tomoDict, self.ctfDict = (
                 getTsIdsDicts(tsSet, tomoSet, ctfSet, present_ts_ids=presentTsIds))
+            self.makeDirs()
 
     def convertInputStep(self, tsId: str):
         logger.info(cyanStr(f'tsId = {tsId}: converting the inputs...'))
