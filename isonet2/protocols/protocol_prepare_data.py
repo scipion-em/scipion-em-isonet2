@@ -262,7 +262,7 @@ class ProtIsonet2PrepareData(ProtIsonet2Base):
         return self._getExtraPath(EVEN_DIR)
 
     def _getMasksDir(self) -> str:
-        return self._getTmpPath(MASKS_DIR)
+        return self._getExtraPath(MASKS_DIR)
 
     def getTomoSet(self):
         return self._getFormAttrib(IN_TOMOS)
