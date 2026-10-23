@@ -1,3 +1,1 @@
-#mrcfile>=1.4.0,<=1.4.3
-#scipion-em>=3.9.1
-#pyyaml
+scipion-em-tomo>=3.12.5

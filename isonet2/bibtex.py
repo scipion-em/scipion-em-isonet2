@@ -1,15 +1,13 @@
 # -*- coding: utf-8 -*-
 
 """
-@article{Liu2022,
-title = "Isotropic reconstruction for electron tomography with deep learning",
-author = "Liu, Yun-Tao et al.",
-journal = "Nature Communications",
-year = "2022",
-volume = "13",
-number = "1",
-doi = "10.1038/s41467-022-33957-8",
-url = "http://doi.org/10.1038/s41467-022-33957-8",
+@article{liu2025isonet2,
+  author    = {Liu, Yun-Tao and Fan, Hongcheng and Jih, Jonathan and Tran, Liam and Zhang, Xiaoying and Zhou, Z. Hong},
+  title     = {IsoNet2 determines cellular structures at submolecular resolution without averaging},
+  journal   = {bioRxiv},
+  publisher = {Cold Spring Harbor Laboratory},
+  year      = {2025},
+  doi       = {10.1101/2025.12.09.693325}
 }
 
 """

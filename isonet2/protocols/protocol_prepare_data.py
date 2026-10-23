@@ -36,7 +36,7 @@ from pyworkflow import BETA
 from pyworkflow.object import String
 from pyworkflow.protocol import PointerParam
 from pyworkflow.utils import Message, cyanStr, yellowStr, makePath, redStr
-from tomo.objects import TiltSeries, CTFTomoSeries, SetOfTomoMasks, TomoAcquisition
+from tomo.objects import TiltSeries, CTFTomoSeries, SetOfTomoMasks, TomoAcquisition, TiltImage
 from tomo.utils import getTsIdsIntersection, getTsIdsDicts, check_sr_and_size, convertOrLink
 
 logger = logging.getLogger(__name__)
@@ -56,6 +56,7 @@ class ProtIsonet2PrepareData(ProtIsonet2Base):
         self.ctfDict = {}
         self.tomoMaskDict = {}
         self.failedTsIds = []
+        self.tsIdList = String()
         self._tomoFile = String()
 
     # --------------------------- DEFINE param functions ----------------------
@@ -104,7 +105,6 @@ class ProtIsonet2PrepareData(ProtIsonet2Base):
 
     # -------------------------- STEPS functions ------------------------------
     def _initialize(self):
-        self.makeDirs()
         tsSet = self._getFormAttrib(IN_TS_SET)
         tomoSet = self._getFormAttrib(IN_TOMOS)
         ctfSet = self._getFormAttrib(IN_CTF_SET)
@@ -120,9 +120,12 @@ class ProtIsonet2PrepareData(ProtIsonet2Base):
 
             self.tsDict, self.tomoDict, self.ctfDict = (
                 getTsIdsDicts(tsSet, tomoSet, ctfSet, present_ts_ids=presentTsIds))
+        self.makeDirs()
 
     def convertInputStep(self, tsId: str):
         logger.info(cyanStr(f'tsId = {tsId}: converting the inputs...'))
+
+
         try:
             tomo = self.tomoDict[tsId]
             # TomoMask
@@ -170,7 +173,10 @@ class ProtIsonet2PrepareData(ProtIsonet2Base):
         if not exists(tomoStarFile):
             raise Exception(f'Tomo star file {tomoStarFile} was not generated.')
         self.setTomoSStarFile(tomoStarFile)
-        self._store(self._tomoFile)
+        tsIds = [tsId for tsId in self.tsDict.keys() if tsId not in self.failedTsIds]
+        self.tsIdList.set(' '.join(tsIds))
+        self._store()
+
 
     # -------------------------- UTILS functions ------------------------------
     def _genPrepareStarCmd(self, acq: TomoAcquisition) -> str:
@@ -192,39 +198,6 @@ class ProtIsonet2PrepareData(ProtIsonet2Base):
             cmd += [f'--mask_folder {self._getMasksDir()}']
         return ' '.join(cmd)
 
-    def _genZeroTiltDefocusList(self) -> List[float]:
-        defocusList = []
-        for tsId, ts in self.tsDict.items():
-            ctf = self.ctfDict[tsId]
-            defocusVal = self._getZeroTiltDefocus(ts, ctf)
-            defocusList.append(defocusVal)
-
-        return defocusList
-
-    @staticmethod
-    def _getZeroTiltDefocus(ts: TiltSeries, ctf: CTFTomoSeries) -> Optional[float]:
-        tiList = [ti.clone() for ti in ts.iterItems()]
-        ctfList = [ctfTomo.clone() for ctfTomo in ctf.iterItems()]
-
-        # Find the tilt-image with the tilt angle closest to 0.
-        tiZeroTilt = min(tiList, key=lambda ti: abs(ti.getTiltAngle()))
-        tiZeroTiltAcqOrder = tiZeroTilt.getAcquisitionOrder()
-
-        # Find the corresponding CTF. next() will stop evaluating
-        # as soon as it finds the first match
-        matchingCtf = None
-        for ctfTomo in ctfList:
-            if ctfTomo.getAcquisitionOrder() == tiZeroTiltAcqOrder:
-                matchingCtf = ctfTomo
-                break
-
-        # Return the defocus if a match was found.
-        if matchingCtf:
-            meanDefocus = (matchingCtf.getDefocusU() + matchingCtf.getDefocusV()) / 2
-            return meanDefocus
-        else:
-            return None
-
     def makeDirs(self) -> None:
         dirList = [
             self._getOddDir(),
@@ -233,6 +206,43 @@ class ProtIsonet2PrepareData(ProtIsonet2Base):
         if self.tomoMaskDict:
             dirList.append(self._getMasksDir())
         makePath(*dirList)
+
+    def _genZeroTiltDefocusList(self) -> List[float]:
+        defocusList = []
+        for tsId, ts in sorted(self.tsDict.items()):
+            ctf = self.ctfDict[tsId]
+            defocusVal = self._getZeroTiltDefocus(ts, ctf)
+            defocusList.append(defocusVal)
+
+        return defocusList
+
+    @staticmethod
+    def _getZeroTiltDefocus(ts: TiltSeries, ctf: CTFTomoSeries) -> float:
+        tiltAnglesSorted = []
+        acqOrdersSorted = []
+        for ti in ts.iterItems(orderBy=TiltImage.TILT_ANGLE_FIELD):
+            tiltAnglesSorted.append(abs(ti.getTiltAngle()))
+            acqOrdersSorted.append(ti.getAcquisitionOrder())
+
+        minTiltAngle = min(tiltAnglesSorted)
+        # Index of the zero tilt-angle
+        minTiltAngleIndex = tiltAnglesSorted.index(minTiltAngle)
+        # Acq order index in tilt-image list that corresponds to the zero tilt angle
+        zeroTiltAcqOrder = acqOrdersSorted[minTiltAngleIndex]
+
+        acqOrders = []
+        ctfMeanDefocus = []
+        for ctfTomo in ctf.iterItems():
+            acqOrders.append(ctfTomo.getAcquisitionOrder())
+            ctfMeanDefocus.append((ctfTomo.getDefocusU() + ctfTomo.getDefocusV()) / 2)
+
+        # Acq order index in ctfTomo list that corresponds to the zero tilt
+        ctfZeroTiltAcqOrderIndex = acqOrders.index(zeroTiltAcqOrder)
+        # Mean defocus of the ctfTomo that corresponds to the zero tilt-angle (via common field acqOrder
+        # between tilt-images and ctfTomos)
+        zeroTiltDefocus = ctfMeanDefocus[ctfZeroTiltAcqOrderIndex]
+        return zeroTiltDefocus
+
 
     def _getConvertedOrLinkedNameOdd(self, tsId: str) -> str:
         return join(self._getOddDir(), f'{tsId}{ODD_SUFFIX}{MRC_EXT}')
@@ -243,23 +253,19 @@ class ProtIsonet2PrepareData(ProtIsonet2Base):
     def _getConvertedOrLinkedNameMask(self, tsId: str) -> str:
         return join(self._getMasksDir(), f'{tsId}{MASK_SUFFIX}{MRC_EXT}')
 
-    def getTomoStarFile(self) -> str:
-        return self._tomoFile.get()
-
-    def setTomoSStarFile(self, val: str) -> None:
-        self._tomoFile.set(val)
-
     def _getOddDir(self) -> str:
-        return self._getTmpPath(ODD_DIR)
+        return self._getExtraPath(ODD_DIR)
 
     def _getEvenDir(self) -> str:
-        return self._getTmpPath(EVEN_DIR)
+        return self._getExtraPath(EVEN_DIR)
 
     def _getMasksDir(self) -> str:
-        return self._getTmpPath(MASKS_DIR)
+        return self._getExtraPath(MASKS_DIR)
 
-    def _getTomosStarName(self) -> str:
-        return self._getExtraPath(TOMOGRAMS_STAR)
+    def getTomoSet(self):
+        return self._getFormAttrib(IN_TOMOS)
+
+
 
     # -------------------------- INFO functions ------------------------------
     def _validate(self) -> List[str]:
