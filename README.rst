@@ -130,6 +130,4 @@ If you want to check the latest version and release history go to `CHANGES <http
 References
 ----------
 
-Liu, YT., Zhang, H., Wang, H. et al. Isotropic reconstruction for electron tomography with deep learning. Nat Commun 13, 6482 (2022). https://doi.org/10.1038/s41467-022-33957-8
-
-
+Liu YT, Fan H, Jih J, Tran L, Zhang X, Zhou ZH. IsoNet2 determines cellular structures at submolecular resolution without averaging. Preprint. bioRxiv. 2025;2025.12.09.693325. Published 2025 Dec 11. doi:10.64898/2025.12.09.693325

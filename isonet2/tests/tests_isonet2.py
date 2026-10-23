@@ -350,7 +350,7 @@ class TestIsonet2(TestBaseCentralizedLayer):
         # Check the refine model
         self._checkModel(modelRefine)
         # Run Predict
-        print(magentaStr(f"\n==> Prepare Data ==> Training step ==> Predict step ==> Make mask step ==> Refine step"))
+        print(magentaStr(f"\n==> Prepare Data ==> Training step ==> Predict step ==> Make mask step ==> Refine step ==> Predict step"))
         protPredict, setofTomos = self._runIsonet2Predict(protRefine, modelRefine)
         # Check the tomograms
         self._checkSetOfTomos(setofTomos)
