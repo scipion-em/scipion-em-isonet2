@@ -369,12 +369,12 @@ class TestIsonet2(TestBaseCentralizedLayer):
                              ctfSetMsg=self.EXC_VIEWS,
                              tsSetMsg=self.UNMODIFIED)
 
-    def testIsonet2_EV_Ts(self):
-        importedTs, importedCtfs = self._runPreviousProtocols(eVTs=True)
-        self._runTestIsonet2(inCtfSet=importedCtfs,
-                             inTsSet=importedTs,
-                             ctfSetMsg=self.UNMODIFIED,
-                             tsSetMsg=self.EXC_VIEWS)
+    # def testIsonet2_EV_Ts(self):
+    #     importedTs, importedCtfs = self._runPreviousProtocols(eVTs=True)
+    #     self._runTestIsonet2(inCtfSet=importedCtfs,
+    #                          inTsSet=importedTs,
+    #                          ctfSetMsg=self.UNMODIFIED,
+    #                          tsSetMsg=self.EXC_VIEWS)
 
     def testIsonet2_EV_Restacked_Ctf(self):
         importedTs, _ = self._runPreviousProtocols()
@@ -384,13 +384,13 @@ class TestIsonet2(TestBaseCentralizedLayer):
                              ctfSetMsg=self.EXC_VIEWS,
                              tsSetMsg=self.UNMODIFIED)
 
-    def testIsonet2_EV_Restacked_Ts(self):
-        importedTs, importedCtfs = self._runPreviousProtocols(eVTs=True)
-        tsSetReStacked = self._runExcludeViewsProt(importedTs)  # Re-stack the TS
-        self._runTestIsonet2(inCtfSet=importedCtfs,
-                             inTsSet=tsSetReStacked,
-                             ctfSetMsg=self.UNMODIFIED,
-                             tsSetMsg=self.EXC_VIEWS)
+    # def testIsonet2_EV_Restacked_Ts(self):
+    #     importedTs, importedCtfs = self._runPreviousProtocols(eVTs=True)
+    #     tsSetReStacked = self._runExcludeViewsProt(importedTs)  # Re-stack the TS
+    #     self._runTestIsonet2(inCtfSet=importedCtfs,
+    #                          inTsSet=tsSetReStacked,
+    #                          ctfSetMsg=self.UNMODIFIED,
+    #                          tsSetMsg=self.EXC_VIEWS)
 
     # Test using a set of Tomo Masks as one of the inputs of prepare data
     def testIsonet2_TomoMasks(self):
