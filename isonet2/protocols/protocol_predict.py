@@ -88,7 +88,9 @@ class ProtIsonet2Predict(ProtIsonet2Base):
                       label='Is the input already phase-flipped?',
                       default=False,
                       help='Whether input tomograms are phase flipped.'
-                           'Set to "Yes" if the input tomograms have been phase flipped.'
+                           'Set to "Yes" if the input tomograms have been already CTF phase-flipped.'
+                           'This must match the "Is the input already phase-flipped?" value used in Training/Refine protocol.'
+                           'Set to "No", the CTF sign is computed from each tomogram\'s defocus.'
                       )
         form.addParam('padding_factor', FloatParam,
                       label='Padding factor',
