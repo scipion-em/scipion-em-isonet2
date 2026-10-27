@@ -121,6 +121,7 @@ class ProtIsonet2Training(ProtIsonet2Base):
         form.addParam('b_factor', FloatParam,
                       label='B-factor',
                       default=0,
+                      condition=f'ctf_mode == {CTF_NETWORK}',
                       help='B-factor applied during training/prediction to boost high-frequency content. '
                            'For cellular tomograms we recommend a b-factor of 0. For isolated samples, '
                            'you can use a b-factor from 200–300. '
