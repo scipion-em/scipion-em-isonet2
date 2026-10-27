@@ -37,7 +37,7 @@ __version__ = '3.0.0'
 from pyworkflow.utils import Environ
 
 _logo = "icon.png"
-_references = ['Liu2022']
+_references = ['liu2025isonet2']
 
 
 class Plugin(pwem.Plugin):

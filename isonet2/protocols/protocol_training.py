@@ -24,23 +24,38 @@
 # *  e-mail address 'scipion@cnb.csic.es'
 # *
 # **************************************************************************
+import glob
 import logging
+import traceback
+from enum import Enum
+from os.path import join
+from typing import List
 
-from isonet2.constants import PREPARE_DATA_PROT
+from isonet2 import Plugin
+from isonet2.constants import PREPARE_DATA_PROT, CTF_NONE, UNET_MEDIUM, L2, ARCH_CHOICES, \
+    LOSS_FUNC_CHOICES, CTF_MODE_CHOICES, CFP_MODE_CONSTANT_CLIP, CTF_NETWORK, CTF_WIENER, BATCH_AUTO
+from isonet2.objects import Isonet2Model
 from isonet2.protocols.protocol_base import ProtIsonet2Base
 from pyworkflow import BETA
-from pyworkflow.protocol import PointerParam, GPU_LIST, StringParam
-from pyworkflow.utils import Message
+from pyworkflow.protocol import PointerParam, GPU_LIST, StringParam, EnumParam, BooleanParam, FloatParam, \
+    LEVEL_ADVANCED, IntParam, GT, GE
+from pyworkflow.utils import Message, cyanStr, redStr, removeBaseExt
 
 logger = logging.getLogger(__name__)
+
+
+class Outputobjects(Enum):
+    model = Isonet2Model
 
 
 class ProtIsonet2Training(ProtIsonet2Base):
     """Denoise for quicker noise-to-noise (n2n) training workflows for preliminary
     tomogram testing and mask generation."""
 
-    _label = 'training (denoising)'
+    _label = 'Training'
     _devStatus = BETA
+
+    _possibleOutputs = Outputobjects
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -51,10 +66,330 @@ class ProtIsonet2Training(ProtIsonet2Base):
         form.addParam(PREPARE_DATA_PROT, PointerParam,
                       pointerClass='ProtIsonet2PrepareData',
                       important=True,
-                      label='Isonet prepare data protocol')
+                      label='Isonet2 Prepare data protocol')
+
+        form.addParam('pretrained_choice', BooleanParam,
+                      label='Load pretrained model',
+                      default=False,
+                      help='Pretrained model to continue training. Previous method, architecture, cube_size, '
+                           'ctf_mode, and metrics will be loaded.'
+                      )
+        form.addParam('pretrained_model', PointerParam,
+                      pointerClass='Isonet2Model',
+                      label='Isonet pretrained model',
+                      condition='pretrained_choice',
+                      )
+
+        form.addSection(label='CTF Correction')
+        form.addParam('ctf_mode', EnumParam,
+                      label='CTF mode',
+                      choices=['None', 'phase_only', 'wiener', 'network'],
+                      default=CTF_NONE,
+                      display=EnumParam.DISPLAY_HLIST,
+                      allowsNull=False,
+                      help='CTF handling mode: "None", "phase_only", "wiener", or "network". '
+                           '"None": No CTF correction. '
+                           '"phase_only": Phase-only correction. '
+                           '"wiener":Applies Wiener filter to network target.'
+                           '"network": Applies CTF-shaped filter to network input. '
+                      )
+        form.addParam('isCTFflipped', BooleanParam,
+                      label='Is the input already phase-flipped?',
+                      default=False,
+                      condition=f'ctf_mode != {CTF_NONE}',
+                      help='Check this ONLY if CTF phase correction has already been '
+                           'applied upstream. If disabled, the next option will appear to decide whether the phase-flip '
+                           'should be done here during training.'
+                      )
+        form.addParam('do_phaseflip_input', BooleanParam,
+                      label='Apply phase-flip during training?',
+                      default=True,
+                      condition=f'ctf_mode != {CTF_NONE} and not isCTFflipped',
+                      help='Only shown when the input is NOT already phase-flipped. '
+                           'If enabled, training corrects the CTF sign on the input '
+                           'volumes before feeding the network'
+                      )
+        form.addParam('clip_first_peak_mode', EnumParam,
+                      label='Clip first peak mode',
+                      choices=['none', 'constant clip', 'negative sine', 'cosine'],
+                      default=CFP_MODE_CONSTANT_CLIP,
+                      display=EnumParam.DISPLAY_HLIST,
+                      condition=f'ctf_mode == {CTF_NETWORK}',
+                      help='Controls attenuation of overrepresented very-low-frequency CTF peak.'
+                           'Options "negative sine" and "cosine" might increase low-resolution contrast.'
+                      )
+        form.addParam('b_factor', FloatParam,
+                      label='B-factor',
+                      default=0,
+                      help='B-factor applied during training/prediction to boost high-frequency content. '
+                           'For cellular tomograms we recommend a b-factor of 0. For isolated samples, '
+                           'you can use a b-factor from 200–300. '
+                      )
+        group = form.addGroup('CTF Deconvolution',
+                              condition=f'ctf_mode == {CTF_WIENER}',
+                              expertLevel=LEVEL_ADVANCED
+                              )
+        group.addParam('ctf_deconvolution', BooleanParam,
+                       label='Apply CTF Deconvolution',
+                       default=False
+                       )
+        group.addParam('snr_falloff', FloatParam,
+                       label='SNR falloff',
+                       default=0,
+                       validators=[GE(0)],
+                       condition='ctf_deconvolution',
+                       help='Controls frequency-dependent SNR attenuation applied during deconvolution; '
+                            'larger values reduce high-frequency contribution more aggressively.'
+                       )
+        group.addParam('deconv_strength', FloatParam,
+                       label='Deconvolution strength',
+                       default=1.0,
+                       validators=[GT(0)],
+                       condition='ctf_deconvolution',
+                       help='Scalar multiplier for deconvolution strength; increasing this emphasizes correction '
+                            'and low-frequency recovery.'
+                       )
+        group.addParam('highpass_nyquist', FloatParam,
+                       label='Highpass Nyquist',
+                       default=0.02,
+                       condition='ctf_deconvolution',
+                       help='Fraction of the Nyquist used as a very-low-frequency high-pass cutoff; use to remove '
+                            'large-scale intensity gradients and drift.'
+                       )
+
+        form.addSection(label='Training Parameters')
+        form.addParam('arch', EnumParam,
+                      label='Architecture',
+                      choices=['unet-small', 'unet-medium', 'unet-large'],
+                      default=UNET_MEDIUM,
+                      display=EnumParam.DISPLAY_HLIST,
+                      expertLevel=LEVEL_ADVANCED,
+                      help='Network architecture (e.g., unet-small, unet-medium, unet-large). '
+                           'Determines model capacity and VRAM requirements.'
+                      )
+        form.addParam('batch_mode', EnumParam,
+                      label='Batch size selection',
+                      choices=['auto', 'manual'],
+                      default=BATCH_AUTO,
+                      help='Number of subtomograms per optimization step; if "auto", this is automatically determined '
+                           'by multiplying the number of available GPUs by 2.'
+                           'If the number of GPUs is 1, batch size is 4. '
+                           'If "manual", set the value yourself.'
+                      )
+        form.addParam('batch_size', StringParam,
+                      label='Batch size',
+                      condition=f'batch_mode != {BATCH_AUTO}',
+                      allowsNull=False,
+                      help='Total subtomograms per optimization step, across all GPUs.'
+                      )
+
+        form.addParam('cube_size', IntParam,
+                      label='Cube size',
+                      default=96,
+                      help='Size in voxels of training subvolumes. '
+                           'Must be compatible with the network (divisible by the network downsampling factors).'
+                      )
+        form.addParam('epochs', IntParam,
+                      label='Epochs',
+                      default=50,
+                      validators=[GT(0)],
+                      help='Number of training epochs.'
+                      )
+        form.addParam('learning_rate', FloatParam,
+                      label='Learning rate',
+                      default=3e-4,
+                      expertLevel=LEVEL_ADVANCED,
+                      validators=[GT(0)],
+                      help='Initial learning rate.'
+                      )
+        form.addParam('learning_rate_min', FloatParam,
+                      label='Minimum learning rate',
+                      default=3e-4,
+                      expertLevel=LEVEL_ADVANCED,
+                      validators=[GT(0)],
+                      help='Minimum learning rate for scheduler.'
+                      )
+        form.addParam('loss_func', EnumParam,
+                      label='Loss function',
+                      choices=['L1', 'HUBER', 'L2'],
+                      default=L2,
+                      expertLevel=LEVEL_ADVANCED,
+                      help='Loss function to use for training: L1, Huber, L2.'
+                      )
+        form.addParam('mixed_precision', BooleanParam,
+                      label='Use mixed precision?',
+                      default=True,
+                      expertLevel=LEVEL_ADVANCED,
+                      help='If set to "Yes", float16/mixed precision to reduce VRAM and speed up training is used.'
+                      )
+
+        group = form.addGroup('Checkpoints & preview')
+        group.addParam('save_interval', IntParam,
+                       label='Save interval (epochs)',
+                       default=10,
+                       validators=[GT(0)],
+                       help='Interval to save model checkpoints.'
+                       )
+        group.addParam('with_preview', BooleanParam,
+                       label='Preview during training?',
+                       default=False,
+                       help='Run prediction every saved interval.'
+                       )
+        group.addParam('prev_tomo_idx', StringParam,
+                       label='Preview tomogram index(es)',
+                       condition='with_preview',
+                       default=1,
+                       help='If set, automatically predict only the tomograms listed by these indices '
+                            '(e.g., "1,2,4" or "5-10,15,16")'
+                       )
 
         form.addHidden(GPU_LIST, StringParam,
                        default='0',
                        label="Choose GPU IDs",
-                       help="")
+                       help=""
+                       )
+        form.addParallelSection(threads=8, mpi=0)
 
+    # --------------------------- INSERT steps functions ----------------------
+    def _insertAllSteps(self):
+        self._initialize()
+
+        self._insertFunctionStep(self.trainingStep, needsGPU=True)
+        self._insertFunctionStep(self.createOutputStep, needsGPU=False)
+
+    # -------------------------- STEPS functions ------------------------------
+    def _initialize(self):
+        self._copyStar()
+        inputProt = self._getFormAttrib(PREPARE_DATA_PROT)
+        self._copyTsIdList(inputProt)
+
+
+    def trainingStep(self):
+        logger.info(cyanStr(f' Training step...'))
+
+        try:
+            args = self._generateArguments()
+            Plugin.runIsonet2(self, args, useGpu=True)
+        except Exception as e:
+            logger.error(redStr(f'Denoise training failed with the exception -> {e}'))
+            logger.error(traceback.format_exc())
+
+
+    def createOutputStep(self):
+        tomoStarFile = self._getTomosStarName()
+        self.setTomoSStarFile(tomoStarFile)
+
+        protPrepare = self._getFormAttrib(PREPARE_DATA_PROT)
+
+        modelFiles = sorted(glob.glob(self._getExtraPath('*_full.pt')), reverse=True)
+        if not modelFiles:
+            raise Exception('No model was generated by the training. Check the output log for more details.')
+
+        for modelFile in modelFiles:
+            model = Isonet2Model(model_file=modelFile)
+            modelEpoch = removeBaseExt(modelFile).replace(
+                f'network_n2n_{ARCH_CHOICES[self.arch.get()]}_{self.cube_size.get()}_', '')
+            self._defineOutputs(**{Outputobjects.model.name + f'_{modelEpoch}': model})
+            self._defineSourceRelation(protPrepare.inTomos, model)
+            if self.pretrained_choice.get():
+                self._defineSourceRelation(self.pretrained_model, model)
+        self._store()
+
+
+    # -------------------------- UTILS functions ------------------------------
+
+    def _getModelPath(self):
+        arch = ARCH_CHOICES[self.arch.get()]
+        return join(self._getExtraPath(), f'network_n2n_{arch}_{self.cube_size.get()}_full.pt')
+
+
+    def _generateArguments(self) -> str:
+        output_dir = self._getExtraPath()
+        starFile = self._newStarPath()
+        gpu = ','.join([str(el) for el in self.getGpuList()])
+        pretrained_model = self.pretrained_model.get()
+        ctf_mode = self.ctf_mode.get()
+
+        cmd = [
+            'denoise',
+            f'--star_file {starFile}',
+            f'--output_dir {output_dir}',
+            f'--gpuID "[{gpu}]"',
+            f'--cube_size {self.cube_size.get()}',
+            f'--epochs {self.epochs.get()}',
+            f'--save_interval {self.save_interval.get()}',
+            f'--learning_rate {self.learning_rate.get()}',
+            f'--CTF_mode {CTF_MODE_CHOICES[self.ctf_mode.get()]}',
+            f'--bfactor {self.b_factor.get()}',
+            f'--learning_rate_min {self.learning_rate_min.get()}',
+            f'--ncpus {self.numberOfThreads.get()}',
+            f'--mixed_precision {self.mixed_precision.get()}',
+            f'--arch {ARCH_CHOICES[self.arch.get()]}',
+            f'--loss_func {LOSS_FUNC_CHOICES[self.loss_func.get()]}',
+            f'--with_preview {self.with_preview.get()}'
+        ]
+
+        if self.batch_mode.get() == BATCH_AUTO:
+            cmd.append(f'--batch_size auto ')
+        else:
+            cmd.append(f'--batch_size {self.batch_size.get()}')
+
+        if not ctf_mode == CTF_NONE:
+            cmd.append(f'--isCTFflipped {self.isCTFflipped.get()}')
+            cmd.append(f'--do_phaseflip_input {self.do_phaseflip_input.get()}')
+
+            if ctf_mode == CTF_NETWORK:
+                cmd.append(f'--clip_first_peak_mode {self.clip_first_peak_mode.get()}')
+
+            if ctf_mode == CTF_WIENER:
+                if self.ctf_deconvolution.get():
+                    cmd.append(f'--snrfalloff {self.snr_falloff.get()}')
+                    cmd.append(f'--deconvstrength {self.deconv_strength.get()}')
+                    cmd.append(f'--highpassnyquist {self.highpass_nyquist.get()}')
+
+        if self.pretrained_choice:
+            pretrainedPath = self._getPretrainedModelPath(pretrained_model)
+            cmd.append(f'--pretrained_model {pretrainedPath}')
+
+        if self.with_preview.get():
+            cmd.append(f'--prev_tomo_idx {self.prev_tomo_idx.get()}')
+
+        return ' '.join(cmd)
+
+
+    def getTomoSet(self):
+        return self._getInputTomoSet(PREPARE_DATA_PROT)
+
+
+    # --------------------------- INFO functions ------------------------------
+
+    def _validate(self) -> List[str]:
+        valmsg = []
+        cube_size = self.cube_size.get()
+        lr = self.learning_rate.get()
+        lr_min = self.learning_rate_min.get()
+        save_interval = self.save_interval.get()
+        epochs = self.epochs.get()
+        highpass = self.highpass_nyquist.get()
+
+        if cube_size < 64 or cube_size % 16 != 0:
+            valmsg.append('Cube size must be higher than 64 and a multiple of 16.')
+
+        if lr_min > lr:
+            valmsg.append('Minimum learning rate must be lower than the initial learning rate.')
+
+        if save_interval > epochs:
+            valmsg.append('Save interval cannot be greater than the total number of epochs.')
+
+        if not (0 <= highpass < 1):
+            valmsg.append('Highpass Nyquist must be between 0 and 1.')
+
+        if self.ctf_mode.get() != CTF_NONE:
+            if not self.isCTFflipped.get() and not self.do_phaseflip_input.get():
+                valmsg.append(
+                    "CTF phase correction is fully disabled: 'already phase-flipped' "
+                    "is off and 'apply phase-flip during training' is also off. With "
+                    "CTF mode = None, the CTF sign will never be corrected."
+                )
+
+        return valmsg

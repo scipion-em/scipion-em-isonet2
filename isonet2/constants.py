@@ -53,3 +53,41 @@ IN_CTF_SET = 'inCtfSet'
 IN_TS_SET = 'inTsSet'
 TOMO_MASKS = 'tomoMasks'
 PREPARE_DATA_PROT = 'prepDataProt'
+PREDICT_PROT = 'predictProt'
+MAKE_MASK_PROT = 'makeMaskProt'
+TRAINING_PROT = 'trainingProt'
+REFINE_PROT = 'refineProt'
+
+
+# CTF MODE
+CTF_NONE=0
+CTF_PHASE_ONLY=1
+CTF_WIENER=2
+CTF_NETWORK=3
+
+# Architecture
+UNET_SMALL=0
+UNET_MEDIUM=1
+UNET_LARGE=2
+
+# CLip first peak mode
+CFP_MODE_NONE=0
+CFP_MODE_CONSTANT_CLIP=1
+CFP_MODE_NEG_SIN=2
+CFP_MODE_COS=3
+
+#Loss function
+L1=0
+HUBER=1
+L2=2
+
+CTF_MODE_CHOICES = ['None', 'phase_only', 'wiener', 'network']
+ARCH_CHOICES = ['unet-small', 'unet-medium', 'unet-large']
+LOSS_FUNC_CHOICES = ['L1', 'Huber', 'L2']
+
+NOISE_MODE_NONE = 0
+NOISE_MODE_RAMP = 1
+NOISE_MODE_HAMMING = 2
+
+BATCH_AUTO=0
+BATCH_MANUAL=1
