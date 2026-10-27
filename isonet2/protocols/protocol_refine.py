@@ -113,14 +113,14 @@ class ProtIsonet2Refine(ProtIsonet2Base):
                       choices=['none', 'constant clip', 'negative sine', 'cosine'],
                       default=CFP_MODE_CONSTANT_CLIP,
                       display=EnumParam.DISPLAY_HLIST,
-                      condition=f'ctf_mode == {CTF_NETWORK},{CTF_WIENER}',
+                      condition=f'ctf_mode == {CTF_NETWORK} or ctf_mode == {CTF_WIENER}',
                       help='Controls attenuation of overrepresented very-low-frequency CTF peak.'
                            'Options "negative sine" and "cosine" might increase low-resolution contrast.'
                       )
         form.addParam('b_factor', FloatParam,
                       label='B-factor',
                       default=0,
-                      condition=f'ctf_mode == {CTF_NETWORK}, {CTF_WIENER}',
+                      condition=f'ctf_mode == {CTF_NETWORK} or ctf_mode ==  {CTF_WIENER}',
                       help='B-factor applied during training/prediction to boost high-frequency content. '
                            'For cellular tomograms we recommend a b-factor of 0. For isolated samples, '
                            'you can use a b-factor from 200–300. '
