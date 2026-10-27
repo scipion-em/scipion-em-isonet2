@@ -274,4 +274,8 @@ class ProtIsonet2PrepareData(ProtIsonet2Base):
         if not inTomos.hasOddEven():
             errors.append('The even/odd tomograms cannot be found '
                           'in the metadata of the introduced tomograms.')
+
+        if inTomos.ctfCorrected():
+            errors.append('The tomograms have already CTF corrected. Isonet2 its prepared to work with no-corrected '
+                          'CTF tomograms.')
         return errors
