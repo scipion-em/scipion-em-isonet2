@@ -111,12 +111,10 @@ Notes for the Scipion plugin
   IsoNet2 corrects the CTF within the network training. The correction is controlled by the ``CTF mode`` parameter, available in the
   **Training** and **Refine** protocols:
 
-  * ``None``: no CTF correction (IsoNet2 default).
-  * ``phase_only``: phase-only correction.
-  * ``network``: the network input is multiplied by the CTF, so that the network learns to
-    compensate for it, analogous to the missing-wedge correction.
-  * ``wiener``: a Wiener filter is applied to the network target. Only in this mode the
-    ``SNR falloff``, ``Deconvolution strength`` and ``Highpass Nyquist`` parameters have an effect.
+    **'None'**: no CTF handling. The CTF options below are ignored.
+    **'phase_only'**: only the sign (phase) of the CTF is corrected on the input volumes.
+    **'network'**: phase correction, plus the network prediction is filtered with the CTF before the loss, so the model learns the CTF-free signal.
+    **'wiener'**: phase correction, plus the training target is filtered with a Wiener filter (deconvolution).
 
 * Training of at least 50 epochs is recommended.
 * Memory usage during training/refine can be reduce by: enabling mixed_precision for float16, reducing batch_size, choosing a smaller network architecture and reducing the cube_size
